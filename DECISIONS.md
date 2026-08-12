@@ -687,3 +687,25 @@ Reversible decisions:
 
 No new tests (this is presentation-layer CSS/HTML, not new logic to verify) — all
 122 existing tests still pass unaffected, and the production build is clean.
+
+## 2026-08-12 — Scope decision: ambient sound/music dropped
+
+The original spec left the door open for optional ambient sound and sacred music
+(quiet church interiors, rain against stone, Byzantine/Gregorian chant, Anglican
+choral music) as a Version 1+ feature — explicitly shipping with no actual audio
+assets in V1 but "retaining the architecture and a documented local audio directory
+for adding [it] later."
+
+**Decision: scrapped, not deferred.** On reflection, the user felt the feature cuts
+against the app's own founding premise — the app is deliberately restrained and
+exists to get out of the way of the physical reading practice (the narthex/sanctuary
+metaphor: the app is the threshold, never the destination). Piping in ambient audio
+nudges toward the app itself becoming part of the experience, rather than a quiet
+tool that steps aside once its job is done. Silence-as-default was always the spec's
+stance; this decision just resolves the tension of *also* offering a feature whose
+entire purpose is to not be silent.
+
+Nothing needed removing from the codebase — this was never built, only mentioned in
+the spec. This entry exists so a future session (human or Claude Code) checking
+DECISIONS.md before picking a next feature doesn't reach for this one, and doesn't
+need to re-litigate why it's not there.
