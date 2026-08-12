@@ -38,6 +38,13 @@ local state per the spec (never merges), runs as a single atomic
 transaction, and validates the backup's shape before touching the database
 at all, so a malformed file can't leave things half-changed.
 
+**Custom start date is now implemented too** (Settings → Reading Year) —
+edits in place before any activity exists, spawns a new Reading Year
+(preserving the old one) once it does, exactly per the spec's rule. See
+`DECISIONS.md` for the one deliberate narrowing of that rule (Daily/Monthly
+Reflections aren't currently reading-year-scoped, so they don't factor
+into the activity check).
+
 ## Running it
 
 ```bash

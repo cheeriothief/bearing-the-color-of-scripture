@@ -532,3 +532,56 @@ Reversible decisions:
 round-trip (build → clear → restore → verify every table), the replace-not-merge
 guarantee specifically, and the untouched-on-failure guarantee — 112 total, all
 passing. Production build verified clean.
+
+## 2026-08-12 — Custom start-date changing, and the "active reading year" concept
+
+Another real gap flagged by the user directly: no way to change the reading year's
+start date manually, which the spec explicitly requires — including the trickier
+rule that a start-date change either edits the current reading year in place, or
+spawns a whole new one, depending on whether anything has happened in it yet.
+
+- **`hasActivity(readingYearId)`** checks completions and stream shifts scoped to
+  that reading year. **Deliberately does NOT check Daily/Monthly Reflections**, even
+  though the spec's prose lists them as a trigger — those are keyed to calendar
+  date/month rather than `readingYearId` in this schema (matching the spec's own
+  "Daily Reflections are keyed to calendar date rather than logical plan day" rule),
+  so there's no reliable way to attribute a given reflection to one specific reading
+  year. This is a genuine, intentional narrowing of the spec's rule, not an
+  oversight — flagged here rather than left to be discovered later. Passage notes
+  ARE covered, transitively: a note can't exist without an encounter, and encounters
+  are properly scoped to `readingYearId`.
+- **`changeStartDate`** implements both branches: if no activity yet, the existing
+  reading year's `startDate` is updated in place (same id, no duplicate created). If
+  activity exists, a brand new `ReadingYear` row is created with the new start date,
+  the old one is left completely untouched (verified by a test that checks the old
+  row's start date and encounter count are unchanged after the change), and the new
+  one becomes active.
+- **Introduced an explicit "active reading year" pointer** (`appStateRepo` —
+  `activeReadingYearId`), replacing the old "whichever reading year is oldest"
+  assumption from Phase 2. This is what actually makes the new-reading-year branch
+  take effect for the rest of the app — without an explicit active pointer, creating
+  a second `ReadingYear` row would do nothing observable, since every screen would
+  keep resolving back to the original one. Backward compatible: an install from
+  before this existed (a reading year with no active-pointer row yet) adopts its
+  existing reading year as active on first read rather than creating a duplicate —
+  covered by its own test.
+- **Settings screen** gained a "Reading Year" section: current start date, a native
+  date input, and messaging that changes depending on whether this reading year has
+  activity yet — telling the person plainly whether their change will edit history or
+  start something new, before they commit to it. Saving triggers a full page reload,
+  same reasoning as the restore feature: several screens fetch their reading year
+  once on mount rather than through live-query reactivity, so a reload is the
+  simple, trustworthy way to guarantee everything picks up the change.
+
+Reversible decisions:
+
+- **Reflections excluded from `hasActivity`**, as detailed above — the single
+  biggest interpretation call in this change. If reflections ever become
+  reading-year-scoped in a future schema change, this should be revisited.
+- **Full page reload after a start-date change**, matching the restore feature's
+  precedent, for the same reasons.
+
+10 new tests covering both branches of `changeStartDate`, the activity-detection
+logic in isolation (including that activity in one reading year doesn't leak into
+another), and the backward-compatibility path for pre-existing installs — 122 total,
+all passing. Production build verified clean.
