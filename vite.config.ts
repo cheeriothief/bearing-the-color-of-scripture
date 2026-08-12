@@ -12,7 +12,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'icon-1024.png'],
       workbox: {
         // Default globPatterns don't include font files — without this,
         // the app would silently fall back to system fonts offline
@@ -25,11 +25,15 @@ export default defineConfig({
         name: 'Bearing the Color of Scripture',
         short_name: 'BCoS',
         description: 'A tablet-first, local-first Bible reading companion.',
-        theme_color: '#faf8f4',
-        background_color: '#faf8f4',
+        // Matches the Prayer Book theme's dark cover — this is what shows
+        // as the splash-screen/status-bar background while the app loads,
+        // so it should match the real app, not a stale placeholder.
+        theme_color: '#241b16',
+        background_color: '#241b16',
         display: 'standalone',
         icons: [
-          // Placeholder — real icon assets get added when the design pass happens.
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
         ],
       },
     }),

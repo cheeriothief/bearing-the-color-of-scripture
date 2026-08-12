@@ -585,3 +585,45 @@ Reversible decisions:
 logic in isolation (including that activity in one reading year doesn't leak into
 another), and the backward-compatibility path for pre-existing installs — 122 total,
 all passing. Production build verified clean.
+
+## 2026-08-12 — Real app icon (and cleaning up leftover scaffold defaults)
+
+The PWA had never gotten a real icon — `vite.config.ts` still had an empty
+placeholder array from Phase 1, and while looking at that, two other Vite-scaffold
+defaults turned out to still be sitting there unnoticed: `favicon.svg` was still the
+default Vite splat logo, and the page `<title>` was still literally "tmp-scaffold"
+(the throwaway folder name from the very first scaffolding command). All three
+fixed together.
+
+- **Icon design**: a simple gold bookmark ribbon on the Prayer Book theme's dark
+  cover color (`#241b16` background, `#c9a961` gold — the same gold used for the
+  session-label and spine-divider accents elsewhere in that theme). Deliberately
+  not an open-book, cross, or other generic religious-app clip-art motif — a
+  bookmark is literally and specifically what the app *does* (keeps your place),
+  which felt like a more honest and ownable symbol than reaching for imagery the
+  app itself already avoids (no icons, no skeuomorphic parchment, per the spec's
+  own design direction).
+- Generated at 1024×1024 with Pillow, then downsampled (not separately
+  hand-drawn) to 512, 192, and 180px — a single flat two-color polygon scales down
+  cleanly with no loss of legibility even at the smallest size, confirmed visually
+  before wiring anything up.
+- **`index.html`** gained an explicit `<link rel="apple-touch-icon">` pointing at
+  the 180px version. iOS's "Add to Home Screen" is known to sometimes ignore the
+  web manifest's icon list and look for this tag specifically — declaring it
+  directly is the reliable path rather than hoping the manifest alone covers it.
+- **`vite.config.ts` manifest icons** now list the real 192/512px PNGs (purpose
+  `any`) instead of an empty array, and `theme_color`/`background_color` were
+  updated from a stale cream placeholder (`#faf8f4`, left over from before Prayer
+  Book became the default theme) to match the actual dark cover color — this is
+  what shows as the splash-screen and status-bar background while the PWA loads,
+  so it should match the real app rather than a color nothing in the app actually
+  uses anymore.
+- **`favicon.svg`** replaced with a small hand-written vector version of the same
+  bookmark mark (same proportions as the PNG icons), so the browser tab icon
+  matches the home-screen icon rather than the leftover Vite logo.
+
+No new domain logic here, so no new tests — verified instead by inspecting the
+built `dist/` output directly: confirmed all four icon files land in the output,
+the manifest's icon `src` paths and `start_url`/`scope` correctly include the
+GitHub Pages subpath, and the `apple-touch-icon` link tag resolves to the correct
+final URL. All 122 existing tests still pass; production build verified clean.
