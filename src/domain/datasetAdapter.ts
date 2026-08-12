@@ -1,4 +1,4 @@
-import type { ReadingPlanDataset, PlanDay } from "./types";
+import type { ReadingPlanDataset, PlanDay, ScriptureReference, StreamKey } from "./types";
 import rawDataset from "../data/reading-plan.json";
 
 /**
@@ -60,4 +60,34 @@ export function getPlanDay(ordinal: number): PlanDay | undefined {
 
 export function getReadingYearLength(): number {
   return loadDataset().readingYearLength;
+}
+
+/**
+ * All prior ordinals (strictly before the given one) in this stream whose
+ * Scripture reference is the exact same book and chapter range — i.e. every
+ * earlier occasion the reading plan assigned this exact passage to this
+ * stream. Used to power the "N previous encounters" indicator. This reads
+ * only from the dataset; whether the user actually engaged with those past
+ * occasions is a separate question answered by the encounters table.
+ */
+export function findPriorOrdinalsWithSameReference(
+  stream: StreamKey,
+  ordinal: number,
+  reference: Pick<ScriptureReference, "book" | "startChapter" | "endChapter">
+): number[] {
+  const ds = loadDataset();
+  const matches: number[] = [];
+  for (const day of ds.days) {
+    if (day.ordinal >= ordinal) break; // dataset is ordinal-ordered
+    const ref = day.streams[stream];
+    if (
+      ref &&
+      ref.book === reference.book &&
+      ref.startChapter === reference.startChapter &&
+      ref.endChapter === reference.endChapter
+    ) {
+      matches.push(day.ordinal);
+    }
+  }
+  return matches;
 }

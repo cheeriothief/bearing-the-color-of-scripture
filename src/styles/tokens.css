@@ -1,19 +1,23 @@
 /**
- * Design tokens — Phase 1 scaffold only.
+ * Design tokens for the three named themes from the spec: Prayer Book
+ * (default), Candlelight, and Minimal. Selected via a `data-theme`
+ * attribute on <html>, applied in App.tsx from the persisted setting.
  *
- * This intentionally does NOT implement the Prayer Book / Candlelight /
- * Minimal themes yet (that's Phase 6, alongside the Threshold/Home
- * atmosphere work). What's here is the minimum token surface so later
- * screens have something consistent to build against: a restrained neutral
- * palette and the three bundled type families, self-hosted (never a remote
- * Google Fonts CDN, per the spec).
+ * Prayer Book is the bound-book direction: a dark leather-toned reading
+ * list against a genuinely cream notebook page, with a slender gold line
+ * standing in for a book's spine. Candlelight is built for the Evening
+ * session — deep warm brown-black with a soft amber glow near whatever
+ * reading is in focus, never a literal flame icon. Minimal is the most
+ * restrained of the three: near-monochrome, with completion shown only
+ * through typography (strikethrough, dimmed color) rather than color or
+ * iconography.
  *
- * Font files themselves are NOT included yet — see src/styles/fonts/README.md.
+ * Font files themselves are NOT bundled yet — see src/styles/fonts/README.md.
+ * Until they're added, these fall back gracefully to system serif/sans.
  */
 
-:root {
-  /* Type families. Until font files are added, these fall back gracefully
-     to system serif/sans so the app still reads correctly during Phase 1. */
+:root,
+[data-theme="prayerbook"] {
   --font-serif-traditional: "EB Garamond", Georgia, "Times New Roman", serif;
   --font-serif-contemporary: "Source Serif 4", Georgia, serif;
   --font-sans-accessible: "Atkinson Hyperlegible", -apple-system, sans-serif;
@@ -22,21 +26,80 @@
   --font-display: var(--font-serif-traditional);
   --font-ui: var(--font-sans-accessible);
 
-  /* Restrained neutral palette. Real theme palettes (Prayer Book,
-     Candlelight, Minimal) arrive in Phase 6 — these are placeholders. */
-  --color-bg: #faf8f4;
-  --color-bg-elevated: #ffffff;
-  --color-text: #2a2622;
-  --color-text-muted: #6b6259;
-  --color-border: #ddd6cc;
-  --color-accent: #6b5842;
+  /* "bg" = main content surface (the notebook page). "bg-inset" = the
+     reading-list panel, book-cover-dark and contrasting with the page. */
+  --color-bg: #f2e9d3;
+  --color-bg-inset: #241b16;
+  --color-text: #241b16;
+  --color-text-inset: #f2e9d3;
+  --color-text-muted: #7a6b4f;
+  --color-text-muted-inset: #a8977a;
+  --color-border: #ddd0ab;
+  --color-border-inset: #4a392c;
+  --color-accent: #a8843c;
+  --color-completed: #6b5c48;
 
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 16px;
   --space-4: 24px;
   --space-5: 40px;
-
   --radius-sm: 4px;
   --radius-md: 8px;
+}
+
+[data-theme="candlelight"] {
+  --font-serif-traditional: "EB Garamond", Georgia, "Times New Roman", serif;
+  --font-serif-contemporary: "Source Serif 4", Georgia, serif;
+  --font-sans-accessible: "Atkinson Hyperlegible", -apple-system, sans-serif;
+  --font-body: var(--font-serif-contemporary);
+  --font-display: var(--font-serif-traditional);
+  --font-ui: var(--font-sans-accessible);
+
+  --color-bg: #1c140d;
+  --color-bg-inset: #1c140d;
+  --color-text: #e8ddc9;
+  --color-text-inset: #e8ddc9;
+  --color-text-muted: #7a6248;
+  --color-text-muted-inset: #7a6248;
+  --color-border: #2c2015;
+  --color-border-inset: #2c2015;
+  --color-accent: #d99b3f;
+  --color-completed: #5a5040;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 40px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+[data-theme="minimal"] {
+  --font-serif-traditional: "EB Garamond", Georgia, "Times New Roman", serif;
+  --font-serif-contemporary: "Source Serif 4", Georgia, serif;
+  --font-sans-accessible: "Atkinson Hyperlegible", -apple-system, sans-serif;
+  --font-body: var(--font-serif-contemporary);
+  --font-display: var(--font-serif-traditional);
+  --font-ui: var(--font-sans-accessible);
+
+  --color-bg: #fbfaf8;
+  --color-bg-inset: #f5f4f1;
+  --color-text: #1a1a1a;
+  --color-text-inset: #1a1a1a;
+  --color-text-muted: #8a8578;
+  --color-text-muted-inset: #9a9587;
+  --color-border: #dedad2;
+  --color-border-inset: #e4e1d9;
+  --color-accent: #5c6d64;
+  --color-completed: #a8a398;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 40px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
 }

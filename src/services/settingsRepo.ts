@@ -4,8 +4,21 @@ import { STREAM_KEYS } from "../domain/types";
 
 export type Session = "morning" | "evening";
 export type StreamSessionAssignment = Record<StreamKey, Session>;
+export type Theme = "prayerbook" | "candlelight" | "minimal";
 
 const STREAM_SESSION_KEY = "streamSessionAssignment";
+const THEME_KEY = "theme";
+
+export const DEFAULT_THEME: Theme = "prayerbook";
+
+export async function getTheme(): Promise<Theme> {
+  const row = await db.settings.get(THEME_KEY);
+  return (row?.value as Theme | undefined) ?? DEFAULT_THEME;
+}
+
+export async function setTheme(theme: Theme): Promise<void> {
+  await db.settings.put({ key: THEME_KEY, value: theme });
+}
 
 /**
  * Default assignment, used only the first time the app runs (before the

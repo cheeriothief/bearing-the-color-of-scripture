@@ -20,7 +20,7 @@ describe("Read screen (smoke test)", () => {
     // At least one stream row should render once data loads, regardless of
     // which session (Morning/Evening) the current time of day defaults to.
     await waitFor(async () => {
-      const completeButtons = await screen.findAllByText("Mark complete");
+      const completeButtons = await screen.findAllByRole("button", { name: "Mark complete" });
       expect(completeButtons.length).toBeGreaterThan(0);
     });
 
@@ -33,7 +33,9 @@ describe("Read screen (smoke test)", () => {
     render(<Read />);
     await screen.findByText("Reading Desk");
 
-    const completeButtons = await screen.findAllByText("Mark complete");
+    // "Mark complete" appears twice per row (the swipe-hint overlay text and
+    // the real button) — target the button specifically by role.
+    const completeButtons = await screen.findAllByRole("button", { name: "Mark complete" });
     expect(completeButtons.length).toBeGreaterThan(0);
 
     fireEvent.click(completeButtons[0]);
@@ -43,6 +45,6 @@ describe("Read screen (smoke test)", () => {
       expect(encounters.some((e) => e.completedAt !== null)).toBe(true);
     });
 
-    expect(await screen.findByText("Mark incomplete")).toBeInTheDocument();
+    expect(await screen.findAllByRole("button", { name: "Mark incomplete" })).not.toHaveLength(0);
   });
 });

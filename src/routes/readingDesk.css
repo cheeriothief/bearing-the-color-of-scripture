@@ -1,0 +1,171 @@
+/* Reading Desk layout — mobile-first single column, tablet two-pane. */
+
+.reading-desk {
+  min-height: 60vh;
+}
+
+.reading-desk__session {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+.reading-desk__session button {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+}
+.reading-desk__session button[aria-pressed="true"] {
+  background: var(--color-accent);
+  color: var(--color-bg-inset);
+  border-color: var(--color-accent);
+}
+
+.reading-desk__panes {
+  display: flex;
+  flex-direction: column;
+}
+
+.reading-desk__list {
+  background: var(--color-bg-inset);
+  color: var(--color-text-inset);
+  padding: var(--space-3);
+}
+.reading-desk__list[data-hidden="true"] {
+  display: none;
+}
+
+.reading-desk__notebook {
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding: var(--space-4);
+}
+.reading-desk__notebook[data-hidden="true"] {
+  display: none;
+}
+
+.reading-row {
+  position: relative;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border-inset);
+  touch-action: pan-y;
+  overflow: hidden;
+}
+.reading-row__content {
+  transition: transform 0.15s ease;
+  background: var(--color-bg-inset);
+}
+.reading-row__stream {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--color-text-muted-inset);
+  display: block;
+  margin-bottom: 3px;
+}
+.reading-row__ref {
+  font-family: var(--font-body);
+  font-size: 17px;
+}
+.reading-row__ref[data-completed="true"] {
+  text-decoration: line-through;
+  color: var(--color-completed);
+}
+.reading-row__badge {
+  margin-left: var(--space-2);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-style: italic;
+  color: var(--color-text-muted-inset);
+}
+.reading-row__swipe-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding-left: var(--space-3);
+  background: var(--color-accent);
+  color: var(--color-bg-inset);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+}
+.reading-row__actions {
+  margin-top: var(--space-2);
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.reading-row__actions button {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  background: transparent;
+}
+
+.notebook-heading {
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+.notebook-sub {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-3);
+}
+.notebook-textarea {
+  width: 100%;
+  min-height: 160px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.7;
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+}
+.notebook-back {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-3);
+  display: inline-block;
+}
+
+@media (min-width: 768px) {
+  .reading-desk__panes {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .reading-desk__list {
+    width: 34%;
+    flex-shrink: 0;
+    min-height: 60vh;
+  }
+  .reading-desk__list[data-hidden="true"] {
+    display: block; /* always visible on tablet regardless of selection */
+  }
+  .reading-desk__notebook {
+    width: 66%;
+    min-height: 60vh;
+  }
+  .reading-desk__notebook[data-hidden="true"] {
+    display: block; /* always visible on tablet */
+  }
+  .notebook-back {
+    display: none; /* no "back" concept when both panes are always visible */
+  }
+}

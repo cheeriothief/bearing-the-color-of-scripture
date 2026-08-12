@@ -176,3 +176,65 @@ progress, the app now auto-deploys to a real URL on every push to `main`.
 Once GitHub Pages is enabled in the repository's settings (Settings → Pages →
 Source: GitHub Actions — a one-time manual step), the live URL is:
 `https://cheeriothief.github.io/bearing-the-color-of-scripture/`
+
+## 2026-08-12 — Phase 3: real Reading Desk visual design
+
+Three concrete theme directions (Prayer Book, Candlelight, Minimal — names and fonts
+already fixed by the spec) were mocked up side by side against the real layout before
+any of this was built for real, so the visual direction was chosen deliberately rather
+than defaulted into. Decision: **Prayer Book is the default theme; all three are
+available and switchable from a Settings screen.**
+
+What got built for real (not mockup) this phase:
+
+- **Theme system**: `src/styles/tokens.css` now defines three complete token sets
+  keyed by `data-theme` on `<html>`, applied live from a persisted setting
+  (`src/services/settingsRepo.ts` — `getTheme`/`setTheme`, default `"prayerbook"`).
+- **Settings screen** (`src/routes/Settings.tsx`): reachable via a gear icon in the
+  app header, deliberately NOT added to the primary bottom nav — the spec fixes that
+  nav list at exactly Home/Read/Journal/Library/Prayer, so Settings needed a separate
+  entry point rather than becoming a sixth item.
+- **Responsive Reading Desk layout** (`src/routes/readingDesk.css`): one CSS
+  breakpoint (768px) switches between phone single-column (list and notebook are
+  mutually exclusive full-screen views, with a "Back to readings" control) and tablet
+  two-pane (both always visible, roughly one-third list / two-thirds notebook), per
+  the spec's tablet-vs-phone layout description. This is pure CSS, not JS device
+  detection.
+- **Swipe-to-complete gesture**: implemented with raw touch event handlers
+  (touchstart/touchmove/touchend) tracking left-to-right drag distance, with a
+  73px-ish threshold before firing completion. A same-row "Mark complete" button
+  remains as the required non-swipe fallback for accessibility and to avoid
+  edge-swipe conflicts — both call the same `toggleCompletion` function, so there's
+  exactly one source of truth for what "complete" means.
+- **Real "N previous encounters" indicator**, not a mockup number:
+  `findPriorOrdinalsWithSameReference` (domain/datasetAdapter.ts) finds every earlier
+  ordinal in the same stream where the dataset assigned the exact same book and
+  chapter range, and `countEngagedEncounters` (services/encounterActions.ts) checks
+  how many of those the user actually has an encounter row for. Covered by a test
+  that specifically exercises the Matthew 1 Christmas-swap duplicate (ordinal 114)
+  correctly linking back to its first occurrence (ordinal 1) — a nice callback to the
+  dataset-correction work from the very first session on this project.
+
+Reversible decisions:
+
+- **Settings reached via header gear icon, not a route named in primary nav.** See
+  above — this doesn't violate the spec's fixed nav list since it's a secondary
+  entry point, the same way Progress lives inside Library rather than its own nav
+  item.
+- **Swipe threshold of ~73px** is a starting guess, not derived from anything in the
+  spec. Easy to tune once tested on a real device — noted here so a future
+  adjustment isn't a mystery.
+- **Tablet breakpoint at 768px** — a standard tablet-ish width; nothing in the spec
+  pins an exact number.
+- **"Previous encounters" counts engaged encounters only** (rows that exist because
+  the user completed or noted them), not every calendar occasion the dataset
+  scheduled that passage. A passage the plan schedules four times but the user only
+  ever completed once shows "1 previous encounter," not "3." This matches the
+  spirit of the feature — it's about the user's own history with a passage, not the
+  plan's cadence — but is worth flagging as an interpretation, not an explicit spec
+  rule.
+
+8 new tests (previous-encounters logic, theme persistence) plus 2 existing smoke
+tests updated to disambiguate "Mark complete" appearing twice per row now (the
+swipe-hint overlay text and the real button) — 45 tests total, all passing.
+Production build verified clean.

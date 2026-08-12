@@ -7,32 +7,29 @@ itself, it helps you keep rhythm with a physical Bible you read separately.
 See `DECISIONS.md` for the project's decision log, including corrections
 made to the reading-plan dataset and the rationale behind them.
 
-## Status: Phase 2 — first usable milestone
+## Status: Phase 3 — real Reading Desk visual design
 
-The Reading Desk is real and working: today's five readings resolve correctly,
-split into Morning/Evening sessions, a reading can be marked complete, a
-passage note can be written and saved, everything works fully offline, and
-one stream can be shifted independently of the other four. This is the
-spec's own defined "first internal usable milestone" — ugly, unstyled, but
-real. The visual design (swipe gestures, two-pane tablet layout, previous-
-encounter indicators, Markdown rendering) is Phase 3+.
+The Reading Desk now has a real visual identity, not placeholder styling.
+Three theme directions from the spec (Prayer Book, Candlelight, Minimal)
+are fully implemented and switchable from Settings, with Prayer Book as
+the default. The layout is genuinely responsive — phone gets a
+single-column list with notes on their own screen, tablet gets the
+one-third/two-thirds split with both panes always visible — and reading
+completion works via an actual swipe gesture, with an accessible button
+fallback.
 
-What's new since Phase 1:
+What's new since Phase 2:
 
-- **`src/routes/Read.tsx`** — the actual Reading Desk screen: resolves
-  today's readings, lets you switch sessions, mark things complete, shift a
-  stream, and write/save a passage note
-- **`src/services/readingYearRepo.ts`** — bootstraps a reading year on first
-  launch (see `DECISIONS.md` for why it starts today rather than the spec's
-  default September 1 — this is a Phase 2 shortcut, not a spec change)
-- **`src/services/settingsRepo.ts`** — persisted per-stream Morning/Evening
-  assignment
-- **`src/services/shiftEventRepo.ts`** — records Shift Stream decisions
-- **`src/services/encounterActions.ts`** — completion toggling and passage
-  notes, both backed by lazy encounter creation
-- **13 new tests** (repository behavior + a component-level smoke test that
-  renders the real Reading Desk against an in-memory IndexedDB and confirms
-  completion actually persists) — 37 total, all passing
+- **`src/styles/tokens.css`** — three complete theme token sets
+- **`src/routes/Settings.tsx`** — theme picker, reached via a gear icon in
+  the header (not the primary nav — see `DECISIONS.md` for why)
+- **`src/routes/readingDesk.css`** — the responsive phone/tablet layout
+- **Swipe-to-complete** in `src/routes/Read.tsx`, alongside the existing
+  button-based completion
+- **Real previous-encounters tracking** —
+  `findPriorOrdinalsWithSameReference` in the domain layer plus
+  `countEngagedEncounters` in the repository layer, not a mockup number
+- **8 new tests** — 45 total, all passing
 
 ## Running it
 

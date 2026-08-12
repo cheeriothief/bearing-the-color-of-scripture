@@ -54,3 +54,23 @@ export async function savePassageNote(encounterId: string, markdown: string): Pr
     });
   }
 }
+
+/**
+ * How many of the given prior ordinals (same passage, earlier occasions —
+ * see findPriorOrdinalsWithSameReference) the user actually has an
+ * encounter row for. This is what "N previous encounters" should count:
+ * times the user engaged with this exact passage before, not just times
+ * the plan happened to schedule it.
+ */
+export async function countEngagedEncounters(
+  readingYearId: string,
+  stream: StreamKey,
+  priorOrdinals: number[]
+): Promise<number> {
+  if (priorOrdinals.length === 0) return 0;
+  const rows = await db.encounters
+    .where("[readingYearId+stream+ordinal]")
+    .anyOf(priorOrdinals.map((ordinal) => [readingYearId, stream, ordinal]))
+    .toArray();
+  return rows.length;
+}
