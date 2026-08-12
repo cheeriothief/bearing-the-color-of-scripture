@@ -135,3 +135,34 @@ All new domain and repository logic is covered by tests (13 new tests: repositor
 behavior, plus a component-level smoke test that renders the Reading Desk against a
 real in-memory IndexedDB and confirms completion actually persists) — 37 total,
 all passing. Production build verified clean.
+
+## 2026-08-12 — Live deployment via GitHub Pages
+
+The person testing this app is on iPad/phone only until their desktop is set up, and
+GitHub Codespaces turned out to be impractical on a small touchscreen (no room to see
+a terminal and type in it at once). Rather than requiring a dev environment to see
+progress, the app now auto-deploys to a real URL on every push to `main`.
+
+- **`.github/workflows/deploy.yml`** — runs the test suite, builds, and deploys to
+  GitHub Pages on every push to `main` (and can be triggered manually). The build
+  step running `npm run test` first means a broken build or failing test blocks
+  deployment rather than shipping silently.
+- **`vite.config.ts` `base` path** — set to `/bearing-the-color-of-scripture/` since
+  GitHub Pages serves project sites from a subpath, not the domain root.
+- **Switched from `BrowserRouter` to `HashRouter`** (`src/main.tsx`). GitHub Pages is
+  static hosting with no server-side rewrite rules, so a hard refresh on a route like
+  `/read` would 404 under `BrowserRouter`. Hash-based routes (`/#/read`) always
+  resolve to `index.html` first, avoiding that. Worth switching back to
+  `BrowserRouter` if this ever moves to a host with SPA rewrite support (Netlify,
+  Vercel, etc.) — noted here so that migration isn't a mystery later.
+- **Fixed a real test flake this surfaced:** the Read-screen smoke test asserted on
+  Morning-session stream labels ("Psalms"/"Gospel") specifically, which don't render
+  at all when the test happens to run after noon and the app defaults to the Evening
+  session. Fixed to assert on something session-agnostic (the presence of any
+  "Mark complete" button) instead. This was a real bug in test reliability, not a
+  reason to distrust the underlying app logic — but it would have caused confusing,
+  time-of-day-dependent CI failures if it had shipped as-is.
+
+Once GitHub Pages is enabled in the repository's settings (Settings → Pages →
+Source: GitHub Actions — a one-time manual step), the live URL is:
+`https://cheeriothief.github.io/bearing-the-color-of-scripture/`

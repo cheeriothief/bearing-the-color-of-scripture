@@ -17,10 +17,11 @@ describe("Read screen (smoke test)", () => {
 
     expect(await screen.findByText("Reading Desk")).toBeInTheDocument();
 
-    // At least one stream's reference text should render once data loads.
-    await waitFor(() => {
-      const anyStreamLabel = screen.queryByText("Psalms") ?? screen.queryByText("Gospel");
-      expect(anyStreamLabel).not.toBeNull();
+    // At least one stream row should render once data loads, regardless of
+    // which session (Morning/Evening) the current time of day defaults to.
+    await waitFor(async () => {
+      const completeButtons = await screen.findAllByText("Mark complete");
+      expect(completeButtons.length).toBeGreaterThan(0);
     });
 
     // Exactly one reading year should have been bootstrapped.

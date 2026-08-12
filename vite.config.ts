@@ -4,6 +4,10 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // GitHub Pages serves project sites from /<repo-name>/, not the domain
+  // root. Setting `base` here means every asset path the built app
+  // generates already accounts for that subpath.
+  base: '/bearing-the-color-of-scripture/',
   plugins: [
     react(),
     VitePWA({
