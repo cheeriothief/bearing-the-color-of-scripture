@@ -8,6 +8,7 @@ import Library from "./routes/Library";
 import Prayer from "./routes/Prayer";
 import Settings from "./routes/Settings";
 import Threshold from "./routes/Threshold";
+import GearIcon from "./components/GearIcon";
 import { getTheme } from "./services/settingsRepo";
 import { getLastThresholdDate, markThresholdShown } from "./services/appStateRepo";
 import { shouldShowThreshold } from "./domain/threshold";
@@ -58,7 +59,7 @@ export default function App() {
     <div className="app-shell">
       <header className="app-header">
         <NavLink to="/settings" aria-label="Settings" className="settings-link">
-          ⚙
+          <GearIcon />
         </NavLink>
       </header>
       <Routes>

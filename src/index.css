@@ -30,6 +30,8 @@ nav a.active { color: var(--color-accent); }
   padding: var(--space-2) var(--space-3);
 }
 .settings-link {
+  display: inline-flex;
+  align-items: center;
   font-size: 20px;
   text-decoration: none;
   color: var(--color-text-muted-inset);
