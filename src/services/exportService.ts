@@ -111,8 +111,121 @@ export async function buildJsonBackup(): Promise<string> {
     monthlyReflections: await db.monthlyReflections.toArray(),
     tagReferences: await db.tagReferences.toArray(),
     settings: await db.settings.toArray(),
+    appState: await db.appState.toArray(),
   };
   return JSON.stringify(backup, null, 2);
+}
+
+const BACKUP_TABLE_KEYS = [
+  "readingYears",
+  "streamShiftEvents",
+  "encounters",
+  "passageNotes",
+  "dailyReflections",
+  "monthlyReflections",
+  "tagReferences",
+  "settings",
+  "appState",
+] as const;
+
+export interface ParsedBackup {
+  backupVersion: number;
+  exportedAt: string;
+  readingYears: unknown[];
+  streamShiftEvents: unknown[];
+  encounters: unknown[];
+  passageNotes: unknown[];
+  dailyReflections: unknown[];
+  monthlyReflections: unknown[];
+  tagReferences: unknown[];
+  settings: unknown[];
+  appState: unknown[];
+}
+
+export class InvalidBackupError extends Error {}
+
+/**
+ * Parse and validate a JSON backup's shape before anything touches the
+ * database. Deliberately fails loudly on anything unexpected rather than
+ * silently importing a partial or malformed file — a bad restore should
+ * never leave the app in a worse state than before the attempt.
+ */
+export function parseJsonBackup(json: string): ParsedBackup {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    throw new InvalidBackupError("That file isn't valid JSON.");
+  }
+
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new InvalidBackupError("That file doesn't look like a backup.");
+  }
+  const obj = parsed as Record<string, unknown>;
+
+  if (obj.backupVersion !== 1) {
+    throw new InvalidBackupError(
+      `Unrecognized backup version (${String(obj.backupVersion)}). This app only knows how to restore version 1 backups.`
+    );
+  }
+
+  for (const key of BACKUP_TABLE_KEYS) {
+    if (!Array.isArray(obj[key])) {
+      throw new InvalidBackupError(`Backup is missing or has a malformed "${key}" section.`);
+    }
+  }
+
+  return obj as unknown as ParsedBackup;
+}
+
+/**
+ * Replace all local state with the contents of a backup — simple and
+ * deterministic, per the spec, never attempting to merge with what's
+ * already on the device. Runs as a single Dexie transaction so a failure
+ * partway through can't leave the database in a mixed old/new state.
+ */
+export async function restoreFromJsonBackup(json: string): Promise<void> {
+  const backup = parseJsonBackup(json); // validate BEFORE opening the transaction
+
+  await db.transaction(
+    "rw",
+    [
+      db.readingYears,
+      db.streamShiftEvents,
+      db.encounters,
+      db.passageNotes,
+      db.dailyReflections,
+      db.monthlyReflections,
+      db.tagReferences,
+      db.settings,
+      db.appState,
+    ],
+    async () => {
+      await Promise.all([
+        db.readingYears.clear(),
+        db.streamShiftEvents.clear(),
+        db.encounters.clear(),
+        db.passageNotes.clear(),
+        db.dailyReflections.clear(),
+        db.monthlyReflections.clear(),
+        db.tagReferences.clear(),
+        db.settings.clear(),
+        db.appState.clear(),
+      ]);
+
+      await Promise.all([
+        db.readingYears.bulkAdd(backup.readingYears as never[]),
+        db.streamShiftEvents.bulkAdd(backup.streamShiftEvents as never[]),
+        db.encounters.bulkAdd(backup.encounters as never[]),
+        db.passageNotes.bulkAdd(backup.passageNotes as never[]),
+        db.dailyReflections.bulkAdd(backup.dailyReflections as never[]),
+        db.monthlyReflections.bulkAdd(backup.monthlyReflections as never[]),
+        db.tagReferences.bulkAdd(backup.tagReferences as never[]),
+        db.settings.bulkAdd(backup.settings as never[]),
+        db.appState.bulkAdd(backup.appState as never[]),
+      ]);
+    }
+  );
 }
 
 export function downloadBlob(data: Uint8Array | string, filename: string, mimeType: string): void {

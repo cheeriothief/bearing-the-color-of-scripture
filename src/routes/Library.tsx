@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { getScriptureNotesByBook } from "../services/scriptureNotesRepo";
 import { getStreamProgress, getRepeatedPassages } from "../services/progressRepo";
 import { findByTag, listAllTags } from "../services/tagRepo";
-import { buildJsonBackup, buildMarkdownExportZip, downloadBlob } from "../services/exportService";
+import {
+  buildJsonBackup,
+  buildMarkdownExportZip,
+  downloadBlob,
+  restoreFromJsonBackup,
+  InvalidBackupError,
+} from "../services/exportService";
 import { getOrCreateActiveReadingYear } from "../services/readingYearRepo";
 import { SystemClock } from "../services/clock";
 import MarkdownView from "../components/MarkdownView";
@@ -174,6 +180,10 @@ function ProgressPanel() {
 }
 
 function ExportPanel() {
+  const [restoring, setRestoring] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   async function handleMarkdownExport() {
     try {
       const zip = await buildMarkdownExportZip();
@@ -189,6 +199,42 @@ function ExportPanel() {
     downloadBlob(json, "bearing-the-color-of-scripture-backup.json", "application/json");
   }
 
+  function handleRestoreClick() {
+    fileInputRef.current?.click();
+  }
+
+  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const json = String(reader.result ?? "");
+      const confirmed = window.confirm(
+        "Restoring will replace everything currently stored on this device — every reading, note, and reflection — with the contents of this backup. This cannot be undone. Continue?"
+      );
+      if (!confirmed) return;
+
+      setRestoring(true);
+      setRestoreError(null);
+      try {
+        await restoreFromJsonBackup(json);
+        alert("Restore complete. The app will now reload.");
+        window.location.reload();
+      } catch (err) {
+        setRestoring(false);
+        if (err instanceof InvalidBackupError) {
+          setRestoreError(err.message);
+        } else {
+          console.error("Restore failed:", err);
+          setRestoreError("Something went wrong restoring this backup. Nothing on this device was changed.");
+        }
+      }
+    };
+    reader.readAsText(file);
+  }
+
   return (
     <div className="library-panel">
       <button type="button" className="export-button" onClick={handleMarkdownExport}>
@@ -202,6 +248,23 @@ function ExportPanel() {
         <strong>Export JSON backup</strong>
         <span>A complete machine-readable backup of everything stored on this device.</span>
       </button>
+
+      <button type="button" className="export-button" onClick={handleRestoreClick} disabled={restoring}>
+        <strong>{restoring ? "Restoring…" : "Restore from JSON backup"}</strong>
+        <span>Replaces everything currently on this device with a previously exported backup.</span>
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json"
+        onChange={handleFileSelected}
+        style={{ display: "none" }}
+      />
+      {restoreError && (
+        <p style={{ fontFamily: "var(--font-ui)", fontSize: 13, color: "var(--color-accent)" }}>
+          {restoreError}
+        </p>
+      )}
     </div>
   );
 }

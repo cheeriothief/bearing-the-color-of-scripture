@@ -32,9 +32,11 @@ What's new since Phase 5:
 - **18 new tests**, including a full App-shell integration test of the
   Threshold gate — 103 total, all passing
 
-**Known gap, still open:** there is still no restore/import from a backup
-— only export (see Phase 5 notes in `DECISIONS.md`). Circling back to this
-after Phase 6.
+**Restore is now implemented too** (Library → Export → "Restore from JSON
+backup") — the gap flagged after Phase 5 is closed. Restore fully replaces
+local state per the spec (never merges), runs as a single atomic
+transaction, and validates the backup's shape before touching the database
+at all, so a malformed file can't leave things half-changed.
 
 ## Running it
 

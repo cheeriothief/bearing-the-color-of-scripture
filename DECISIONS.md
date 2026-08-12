@@ -477,3 +477,58 @@ This has no effect on Candlelight (bg and bg-inset are already identical there) 
 only a subtle effect on Minimal (bg and bg-inset are two very close near-white
 tones), so this was really a Prayer-Book-specific problem, exactly where the
 screenshot came from.
+
+## 2026-08-12 — Restoring the gap flagged in Phase 5: backup restore/import
+
+Export existed since Phase 5, restore did not — flagged explicitly at the time as a
+real gap rather than glossed over, and now closed.
+
+- **`parseJsonBackup`** (exportService.ts) validates a backup's shape completely
+  before anything touches the database: valid JSON, an object (not an array or
+  scalar), `backupVersion === 1` exactly, and every expected table section present
+  as an array. Throws a specific `InvalidBackupError` with a message naming what's
+  wrong, rather than a generic parse failure.
+- **`restoreFromJsonBackup`** replaces all local state — never merges — per the
+  spec's explicit restore-behavior rule. Runs as a single Dexie transaction across
+  every table: all clears, then all bulk-inserts, so a mid-restore failure can't
+  leave old and new data mixed together. Validation happens *before* the transaction
+  opens, so a malformed file never touches the database at all — confirmed by a test
+  that seeds real data, attempts to restore garbage, and checks the original data is
+  still there afterward, untouched.
+- **Restored rows keep their original ids, timestamps, and foreign keys exactly** —
+  restore is not a re-derivation or a reconstruction, it's a literal replay of
+  exactly what was exported. Verified directly: an encounter's id, ordinal, and
+  completion timestamp all match exactly after a build → clear → restore cycle.
+- **The backup format grew one field**: `appState` (currently just the
+  Threshold-last-shown date) is now included in both export and restore, for
+  completeness — a backup that silently dropped one small table would be a subtle,
+  confusing gap of its own.
+- **UI** (Library → Export → "Restore from JSON backup"): file picker, a
+  `window.confirm()` naming exactly what will happen and that it can't be undone,
+  then a full-page reload on success. The reload is deliberate — plenty of screens
+  hold their own component-level state fetched once on mount (not all of them are
+  wired through Dexie's live-query reactivity), and a full replace-everything
+  operation is exactly the case where "guarantee every screen re-reads from
+  scratch" matters more than avoiding a reload.
+
+Reversible decisions:
+
+- **`window.confirm()` for the destructive warning**, not a custom two-step
+  in-app confirmation UI. Simple, unmissable on every platform this runs on, and
+  consistent with how the spec already treats note deletion ("allowed with
+  confirmation") — a plain native confirm dialog meets that bar without needing new
+  UI just for this one action.
+- **A full page reload after a successful restore**, rather than trying to make
+  every single screen's data-fetching perfectly reactive to a total-replace event.
+  Simpler, and more trustworthy for something this destructive — no risk of some
+  screen quietly showing stale pre-restore state because its `useEffect` only runs
+  once on mount.
+- **Only `backupVersion === 1` is accepted**, not `<= 1` or any forward-compatible
+  range — there's only ever been one backup format, so being maximally strict now
+  costs nothing and avoids ever having to guess what an unrecognized future version
+  might mean.
+
+9 new tests covering validation (five distinct malformed-input cases), a full
+round-trip (build → clear → restore → verify every table), the replace-not-merge
+guarantee specifically, and the untouched-on-failure guarantee — 112 total, all
+passing. Production build verified clean.
