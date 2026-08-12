@@ -238,3 +238,71 @@ Reversible decisions:
 tests updated to disambiguate "Mark complete" appearing twice per row now (the
 swipe-hint overlay text and the real button) — 45 tests total, all passing.
 Production build verified clean.
+
+## 2026-08-12 — Swipe gesture simplified per user feedback
+
+The initial swipe implementation slid the entire reading row's text horizontally as
+the user dragged, mirroring the drag distance 1:1. Feedback after real device testing:
+too much motion for what the spec calls a "restrained gesture." Fixed by removing the
+translateX-follows-finger behavior entirely — touch tracking still works underneath,
+but the only visible feedback during the drag is now a subtle background tint that
+grows with distance. Text never moves. Completion (the strikethrough) still appears
+the instant the threshold is crossed, with no separate animation. This is exactly the
+kind of usability papercut that gets fixed immediately regardless of what phase is
+active, rather than batched for a later polish pass — it's not the same category as
+"doesn't perfectly match the mockup yet."
+
+## 2026-08-12 — Phase 4: the writing system
+
+Real Markdown rendering, tag parsing per the spec's exact grammar, and Daily/Monthly
+Reflections — the writing system the spec describes as one of the app's major parts.
+
+- **`src/domain/markdown.ts`**: the single choke point for turning Markdown into
+  sanitized HTML (via `marked` + `DOMPurify`). Every note and reflection display goes
+  through this one function, so the spec's "rendered Markdown must be sanitized"
+  requirement is enforced in exactly one place rather than re-implemented per screen.
+  Covered by 8 tests that specifically try to get a `<script>` tag, an `onerror`
+  handler, a `javascript:` URL, and an `<iframe>` through — all confirmed stripped.
+- **`src/domain/tagParser.ts`**: implements the spec's tag grammar precisely (`#`
+  immediately followed by a letter or number, then letters/numbers/underscores/
+  hyphens) and its exclusions (no tags from inside fenced code blocks, inline code
+  spans, Markdown link URLs, or bare autolinks — though tag-shaped text in a link's
+  *visible label* still counts, since that's plainly the user's intent). 13 tests,
+  including several adversarial cases (a tag-like string inside a URL, inside code,
+  glued to punctuation).
+- **`src/services/tagRepo.ts`**: regenerates a source's tag index on every save
+  (delete-then-reinsert, matching the spec's "tags are regenerable" framing) rather
+  than trying to diff old vs. new tags.
+- **`src/services/reflectionRepo.ts`**: Daily Reflections keyed by calendar date,
+  Monthly Reflections keyed by `YYYY-MM` — both independent of plan ordinals, per the
+  spec, so they stay meaningful even as individual streams shift out of sync with
+  each other.
+- **`src/routes/Journal.tsx`**: real UI for both reflection types, with a
+  view-rendered/click-to-edit pattern — matches the spec's "notes should feel like a
+  blank page" while writing, but shows nicely typeset output once you step away from
+  editing.
+- **Passage notes on the Reading Desk got the same view/edit treatment** — a note
+  with content now renders as Markdown by default, and only drops into the raw
+  textarea when tapped.
+
+Reversible decisions:
+
+- **A note starts in edit mode only when it's empty.** Once something's been written,
+  reopening it shows the rendered view first, requiring a tap to edit. This seemed
+  more in the spirit of "blank page" than always dropping straight into raw text.
+- **Tag-shaped text inside a Markdown link's visible label still counts as a tag**
+  (only the URL portion is excluded). The spec says tags "inside... link URLs are
+  ignored" — read narrowly, that's specifically the URL, not link text a user
+  deliberately wrote as `[#topic](url)`.
+- **`marked` + `DOMPurify`** chosen for Markdown rendering/sanitization — both are
+  widely used, actively maintained, and DOMPurify's specific job (stripping dangerous
+  HTML) maps directly onto the spec's sanitization requirement rather than needing a
+  custom sanitizer built from scratch.
+- **No Markdown editing toolbar or live WYSIWYG.** Writing stays a plain textarea;
+  only the *display* of previously-written content is rendered. This matches "the
+  interface should not permanently force the user into categories" — the raw
+  Markdown source is always what you're editing, never a formatted intermediate
+  representation.
+
+23 new tests across tag parsing, Markdown sanitization, and the reflection repository
+— 77 total, all passing. Production build verified clean.

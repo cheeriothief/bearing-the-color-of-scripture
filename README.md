@@ -7,29 +7,26 @@ itself, it helps you keep rhythm with a physical Bible you read separately.
 See `DECISIONS.md` for the project's decision log, including corrections
 made to the reading-plan dataset and the rationale behind them.
 
-## Status: Phase 3 — real Reading Desk visual design
+## Status: Phase 4 — the writing system
 
-The Reading Desk now has a real visual identity, not placeholder styling.
-Three theme directions from the spec (Prayer Book, Candlelight, Minimal)
-are fully implemented and switchable from Settings, with Prayer Book as
-the default. The layout is genuinely responsive — phone gets a
-single-column list with notes on their own screen, tablet gets the
-one-third/two-thirds split with both panes always visible — and reading
-completion works via an actual swipe gesture, with an accessible button
-fallback.
+Markdown notes are now real (sanitized rendering, not just raw text
+storage), tags parse out of notes and reflections automatically per the
+spec's exact grammar, and Daily/Monthly Reflections exist with their own
+screen in Journal.
 
-What's new since Phase 2:
+What's new since Phase 3:
 
-- **`src/styles/tokens.css`** — three complete theme token sets
-- **`src/routes/Settings.tsx`** — theme picker, reached via a gear icon in
-  the header (not the primary nav — see `DECISIONS.md` for why)
-- **`src/routes/readingDesk.css`** — the responsive phone/tablet layout
-- **Swipe-to-complete** in `src/routes/Read.tsx`, alongside the existing
-  button-based completion
-- **Real previous-encounters tracking** —
-  `findPriorOrdinalsWithSameReference` in the domain layer plus
-  `countEngagedEncounters` in the repository layer, not a mockup number
-- **8 new tests** — 45 total, all passing
+- **`src/domain/markdown.ts`** — sanitized Markdown rendering (`marked` +
+  `DOMPurify`), the one choke point every note/reflection display uses
+- **`src/domain/tagParser.ts`** — `#tag` extraction per the spec's grammar,
+  correctly excluding code spans, fenced code blocks, and link URLs
+- **`src/services/tagRepo.ts`** — regenerates a source's tag index on save
+- **`src/services/reflectionRepo.ts`** — Daily/Monthly Reflections, keyed
+  by calendar date and month respectively, independent of plan ordinals
+- **`src/routes/Journal.tsx`** — real UI for both reflection types
+- Passage notes on the Reading Desk now render as Markdown when not being
+  actively edited
+- **23 new tests** — 77 total, all passing
 
 ## Running it
 

@@ -21,7 +21,9 @@ import {
   toggleCompletion,
 } from "../services/encounterActions";
 import { getOrCreateEncounter } from "../services/database";
+import MarkdownView from "../components/MarkdownView";
 import "./readingDesk.css";
+import "./journal.css";
 
 const clock = new SystemClock();
 
@@ -258,6 +260,7 @@ function Notebook({
   const [noteDraft, setNoteDraft] = useState("");
   const [encounterId, setEncounterId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [editingNote, setEditingNote] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -268,6 +271,7 @@ function Notebook({
       if (!cancelled) {
         setEncounterId(enc.id);
         setNoteDraft(existing);
+        setEditingNote(!existing.trim()); // start in edit mode only if there's nothing written yet
         setLoaded(true);
       }
     })();
@@ -279,6 +283,7 @@ function Notebook({
   async function handleSave() {
     if (!encounterId) return;
     await savePassageNote(encounterId, noteDraft);
+    setEditingNote(false);
   }
 
   async function handleShift() {
@@ -297,14 +302,21 @@ function Notebook({
         {STREAM_LABELS[stream]} · ordinal {ordinal}
       </div>
 
-      <textarea
-        className="notebook-textarea"
-        value={loaded ? noteDraft : ""}
-        onChange={(e) => setNoteDraft(e.target.value)}
-        onBlur={handleSave}
-        placeholder="Write freely — Markdown supported."
-        disabled={!loaded}
-      />
+      {loaded && !editingNote ? (
+        <div onClick={() => setEditingNote(true)} className="reflection-view" role="button" tabIndex={0}>
+          <MarkdownView markdown={noteDraft} />
+        </div>
+      ) : (
+        <textarea
+          className="notebook-textarea"
+          value={loaded ? noteDraft : ""}
+          onChange={(e) => setNoteDraft(e.target.value)}
+          onBlur={handleSave}
+          placeholder="Write freely — Markdown supported."
+          disabled={!loaded}
+          autoFocus={editingNote}
+        />
+      )}
 
       <div className="reading-row__actions" style={{ marginTop: "var(--space-3)" }}>
         <button type="button" onClick={handleSave}>

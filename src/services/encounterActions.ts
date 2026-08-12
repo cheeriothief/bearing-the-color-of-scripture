@@ -1,5 +1,6 @@
 import db, { getOrCreateEncounter, type EncounterRecord } from "./database";
 import type { StreamKey } from "../domain/types";
+import { reindexTags } from "./tagRepo";
 
 export async function findEncounter(
   readingYearId: string,
@@ -42,17 +43,21 @@ export async function getPassageNote(encounterId: string): Promise<string> {
 export async function savePassageNote(encounterId: string, markdown: string): Promise<void> {
   const existing = await db.passageNotes.where("encounterId").equals(encounterId).first();
   const now = new Date().toISOString();
+  let noteId: string;
   if (existing) {
+    noteId = existing.id;
     await db.passageNotes.update(existing.id, { markdown, updatedAt: now });
   } else {
+    noteId = crypto.randomUUID();
     await db.passageNotes.add({
-      id: crypto.randomUUID(),
+      id: noteId,
       encounterId,
       markdown,
       createdAt: now,
       updatedAt: now,
     });
   }
+  await reindexTags("passageNote", noteId, markdown);
 }
 
 /**
