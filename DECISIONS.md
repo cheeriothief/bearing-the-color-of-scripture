@@ -162,6 +162,16 @@ progress, the app now auto-deploys to a real URL on every push to `main`.
   "Mark complete" button) instead. This was a real bug in test reliability, not a
   reason to distrust the underlying app logic — but it would have caused confusing,
   time-of-day-dependent CI failures if it had shipped as-is.
+- **First deploy failed at the `npm run test` step in CI** (green locally, red on
+  GitHub's runner). Diagnosed by reproducing a clean `npm ci` install locally, which
+  passed — pointing at an environment difference rather than a code or test problem.
+  The actual cause: Vite 8.x and Vitest 4.x both declare a minimum Node engine of
+  `^20.19.0` (Vite) and `^20.0.0 || ^22.0.0 || >=24.0.0` (Vitest). The workflow's
+  `node-version: 20` resolves to whichever 20.x patch is currently latest on the
+  runner — if that patch happened to sit below `20.19.0`, Vite hard-fails its own
+  engine check before anything else can run. Pinned to Node 22 instead, which this
+  project has already been developed and tested against directly, removing the
+  ambiguity.
 
 Once GitHub Pages is enabled in the repository's settings (Settings → Pages →
 Source: GitHub Actions — a one-time manual step), the live URL is:

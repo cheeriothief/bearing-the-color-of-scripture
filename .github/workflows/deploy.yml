@@ -21,7 +21,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Vite 8.x and Vitest 4.x require Node ^20.19.0 or >=22.12.0.
+          # Pinning "20" alone is risky — it resolves to whatever the latest
+          # 20.x patch happens to be, and an older 20.x patch below 20.19.0
+          # fails Vite's engine check. 22 avoids that ambiguity entirely.
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run test
