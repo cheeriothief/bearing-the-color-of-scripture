@@ -7,26 +7,30 @@ itself, it helps you keep rhythm with a physical Bible you read separately.
 See `DECISIONS.md` for the project's decision log, including corrections
 made to the reading-plan dataset and the rationale behind them.
 
-## Status: Phase 4 — the writing system
+## Status: Phase 5 — Library
 
-Markdown notes are now real (sanitized rendering, not just raw text
-storage), tags parse out of notes and reflections automatically per the
-spec's exact grammar, and Daily/Monthly Reflections exist with their own
-screen in Journal.
+The archive is real: Scripture Notes browsable by biblical book, a Tags
+index, a restrained Progress view (counts and books touched, never
+performance), and Export (both a human-readable Markdown .zip and a
+machine-readable JSON backup).
 
-What's new since Phase 3:
+What's new since Phase 4:
 
-- **`src/domain/markdown.ts`** — sanitized Markdown rendering (`marked` +
-  `DOMPurify`), the one choke point every note/reflection display uses
-- **`src/domain/tagParser.ts`** — `#tag` extraction per the spec's grammar,
-  correctly excluding code spans, fenced code blocks, and link URLs
-- **`src/services/tagRepo.ts`** — regenerates a source's tag index on save
-- **`src/services/reflectionRepo.ts`** — Daily/Monthly Reflections, keyed
-  by calendar date and month respectively, independent of plan ordinals
-- **`src/routes/Journal.tsx`** — real UI for both reflection types
-- Passage notes on the Reading Desk now render as Markdown when not being
-  actively edited
-- **23 new tests** — 77 total, all passing
+- **`src/domain/bibleBooks.ts`** — canonical 66-book order, verified to
+  exactly match every book name the dataset actually uses
+- **`src/services/scriptureNotesRepo.ts`** — passage notes grouped by book
+- **`src/services/progressRepo.ts`** — per-stream completion counts, books
+  touched, and repeated-encounter tracking
+- **`src/services/exportService.ts`** — Markdown ZIP export (via `fflate`)
+  and JSON backup, kept fully independent of each other per the spec
+- **`src/routes/Library.tsx`** — the four sections as an in-screen tab
+  switcher
+- **13 new tests**, including real ZIP round-trip verification — 90 total,
+  all passing
+
+**Known gap, called out explicitly rather than glossed over:** there is no
+restore/import from a backup yet — only export. See `DECISIONS.md` for why
+that's a deliberate scope boundary for this phase, not an oversight.
 
 ## Running it
 

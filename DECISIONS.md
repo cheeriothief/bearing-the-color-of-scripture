@@ -306,3 +306,70 @@ Reversible decisions:
 
 23 new tests across tag parsing, Markdown sanitization, and the reflection repository
 — 77 total, all passing. Production build verified clean.
+
+## 2026-08-12 — Phase 5: Library
+
+The archive: Scripture Notes browsable by biblical book, a Tags index, Progress
+(counts and books touched, never framed as performance), and Export.
+
+- **`src/domain/bibleBooks.ts`**: the canonical 66-book order, Genesis through
+  Revelation. Verified programmatically against the dataset itself — every book name
+  the dataset actually uses matches this list exactly, with none missing and none
+  extra — before it was trusted to drive grouping anywhere.
+- **`src/services/scriptureNotesRepo.ts`**: joins each passage note back to its
+  Scripture reference (via its encounter's stream + ordinal) and groups by book in
+  canonical order, not alphabetically or by write order. An emptied-out note (saved
+  as blank/whitespace) is excluded from the archive rather than showing as a ghost
+  entry.
+- **`src/services/progressRepo.ts`**: per-stream completed-count and books-touched,
+  plus a repeated-encounters list (passages engaged with more than once). Explicitly
+  does NOT compute anything framed as performance — no percentages presented as
+  scores, no comparison across streams, no streaks. Tested specifically against the
+  Matthew 1 Christmas-swap duplicate (ordinals 1 and 114) to confirm it's correctly
+  recognized as one passage encountered twice, not two unrelated completions.
+- **`src/services/exportService.ts`**: both export formats, built as two fully
+  independent functions per the spec's "JSON backup must remain available even if
+  Markdown ZIP generation fails" rule — the Markdown export path has a try/catch with
+  its own user-facing fallback message pointing at the JSON backup; the JSON backup
+  never touches the ZIP-building code at all. The Markdown ZIP uses `fflate`, per the
+  spec's explicit suggestion, with tags in each file's frontmatter regenerated from
+  content at export time rather than stored as a separate directory (matching the
+  spec's framing of tags as "regenerable"). Verified with real ZIP round-trip tests
+  (unzip the output and check exact folder paths and frontmatter content) rather than
+  just confirming the function doesn't throw.
+- **`src/routes/Library.tsx`**: four sub-sections (Scripture Notes, Tags, Progress,
+  Export) as an in-screen tab switcher.
+
+Reversible decisions:
+
+- **Library's four sections are an in-screen tab switcher (local state), not nested
+  routes.** The spec doesn't specify navigation mechanics within Library, and a tab
+  switcher is simpler to reason about for now. Revisiting this as real nested routes
+  (e.g. so a specific tag or book could be deep-linked) is easy later without
+  disturbing anything else, since the four panel components are already fully
+  self-contained.
+- **Restore/import from a backup is intentionally NOT built yet.** The spec does
+  define restore behavior ("replace existing local state rather than attempting to
+  merge two backups"), but this phase only covers export. A backup nobody can restore
+  from is a real gap, not a finished feature — flagged here explicitly so it doesn't
+  quietly get treated as done. Reasonable next step whenever it's prioritized.
+  Nothing in the export format design above should make restore harder later — the
+  JSON backup is a direct table dump, so restoring it is mostly "clear each table,
+  then bulk-insert this backup's version of it."
+  <br>Author's note: Codex or a future Claude session picking this up should treat
+  Export ≠ Backup/Restore as two separate features, only the first of which exists.
+- **The Metadata/progress.md file in the Markdown export is plain prose, not a
+  structured format (JSON/YAML/CSV).** The rest of that folder is meant to be
+  human-readable alongside the notes and reflections next to it; the JSON backup
+  already exists as the machine-readable option, so duplicating structured data here
+  seemed redundant.
+- **Tags panel shows tagged sources by type and date only, without rendering the
+  full note/reflection content inline.** Tapping through to the actual content (vs.
+  just knowing it exists) would need either a shared detail view or duplicating
+  Journal/Reading Desk's editing UI — reasonable follow-up, deferred to keep this
+  phase's scope to what the spec explicitly asks Library to contain.
+
+13 new tests (Bible book ordering, Scripture Notes grouping, Progress counting
+including the repeated-encounter case, and Export — with real ZIP unzip-and-inspect
+round trips rather than just checking the function runs) — 90 total, all passing.
+Production build verified clean.
