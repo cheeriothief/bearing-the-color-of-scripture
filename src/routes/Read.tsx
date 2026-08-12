@@ -198,18 +198,20 @@ function ReadingRow({
     <div
       className="reading-row"
       onClick={onSelect}
-      style={{ cursor: "pointer", outline: selected ? "1px solid var(--color-accent)" : "none" }}
+      style={{
+        cursor: "pointer",
+        outline: selected ? "1px solid var(--color-accent)" : "none",
+        // Subtle background tint tracks the swipe so there's still feedback
+        // mid-gesture, but nothing about the text itself moves or slides.
+        backgroundColor: `color-mix(in srgb, var(--color-accent) ${Math.min(
+          (dragX / SWIPE_COMPLETE_THRESHOLD) * 25,
+          25
+        )}%, transparent)`,
+      }}
     >
-      <div
-        className="reading-row__swipe-hint"
-        style={{ opacity: Math.min(dragX / SWIPE_COMPLETE_THRESHOLD, 1) }}
-      >
-        {completed ? "Mark incomplete" : "Mark complete"}
-      </div>
       <div
         ref={contentRef}
         className="reading-row__content"
-        style={{ transform: `translateX(${dragX}px)` }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
