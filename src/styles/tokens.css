@@ -1,0 +1,42 @@
+/**
+ * Design tokens — Phase 1 scaffold only.
+ *
+ * This intentionally does NOT implement the Prayer Book / Candlelight /
+ * Minimal themes yet (that's Phase 6, alongside the Threshold/Home
+ * atmosphere work). What's here is the minimum token surface so later
+ * screens have something consistent to build against: a restrained neutral
+ * palette and the three bundled type families, self-hosted (never a remote
+ * Google Fonts CDN, per the spec).
+ *
+ * Font files themselves are NOT included yet — see src/styles/fonts/README.md.
+ */
+
+:root {
+  /* Type families. Until font files are added, these fall back gracefully
+     to system serif/sans so the app still reads correctly during Phase 1. */
+  --font-serif-traditional: "EB Garamond", Georgia, "Times New Roman", serif;
+  --font-serif-contemporary: "Source Serif 4", Georgia, serif;
+  --font-sans-accessible: "Atkinson Hyperlegible", -apple-system, sans-serif;
+
+  --font-body: var(--font-serif-contemporary);
+  --font-display: var(--font-serif-traditional);
+  --font-ui: var(--font-sans-accessible);
+
+  /* Restrained neutral palette. Real theme palettes (Prayer Book,
+     Candlelight, Minimal) arrive in Phase 6 — these are placeholders. */
+  --color-bg: #faf8f4;
+  --color-bg-elevated: #ffffff;
+  --color-text: #2a2622;
+  --color-text-muted: #6b6259;
+  --color-border: #ddd6cc;
+  --color-accent: #6b5842;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 40px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}

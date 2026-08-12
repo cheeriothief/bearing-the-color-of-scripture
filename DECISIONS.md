@@ -43,11 +43,46 @@ in both the original and adapted PDFs, not introduced by the Sept 1 adaptation):
    rotation.
    **Decision (user-directed):** Left as-is. This is treated as an accepted
    characteristic of the plan rather than an error to fix. Documented here and in
-   `data/reading-plan.json` under `corrections` so it's never mistaken for a future
+   `src/data/reading-plan.json` under `corrections` so it's never mistaken for a future
    bug.
 
 All three findings and the corrected dataset are recorded in
-`data/reading-plan.json` (see the `corrections` array for machine-readable detail).
+`src/data/reading-plan.json` (see the `corrections` array for machine-readable detail).
 The dataset remains the single authoritative source of Scripture assignments per the
 architecture principle in the spec — the app must never regenerate it from cadence
 rules at runtime.
+
+## 2026-08-12 — Phase 1 scaffold
+
+Built the invisible foundation per the spec's first-task scope: project setup, PWA
+config, routing shell, design-token scaffolding, Dexie/IndexedDB schema, the
+injectable Clock service, and the full reading-plan domain model (dataset adapter,
+calendar mapping, stream-shift model, schedule resolver), plus 24 tests covering all
+of it.
+
+A few reversible choices made along the way, recorded per the ambiguity-handling
+process:
+
+- **Routing library:** chose `react-router-dom` (not specified in the spec). It's the
+  standard choice for a React SPA with the five fixed top-level destinations
+  (Home/Read/Journal/Library/Prayer) and nothing about the spec suggests a reason to
+  avoid it.
+- **PWA plugin:** used `vite-plugin-pwa` to generate the manifest and service worker,
+  since the spec calls for an installable PWA but doesn't specify tooling.
+- **Calendar mapping implementation:** `baseDateForOrdinal` / `baseOrdinalForDate`
+  walk day-by-day rather than using a closed-form calculation. For a 365-day plan this
+  is cheap and, more importantly, it's easy to verify by inspection against the
+  spec's leap-day rule. Can be optimized later if profiling ever shows a need.
+- **`ordinalForEffectiveDate` performance:** currently scans the full reading year
+  (O(365)) per call rather than maintaining a reverse index. Documented in the
+  function's own comment as the first thing to optimize if it's ever called
+  per-frame instead of per-navigation.
+- **Font files not yet bundled:** `src/styles/fonts/` is scaffolded with instructions
+  but no actual font files yet, since theming is a Phase 6 concern. The token file
+  falls back to system fonts in the meantime so nothing looks broken.
+- **PWA icon assets:** left as an empty placeholder array in `vite.config.ts` — no
+  app icon exists yet and generating one is a design task, not a Phase 1 concern.
+
+Nothing in this phase touches the authoritative dataset, destroys user data,
+introduces a backend, or adds gamification — all out of bounds per the spec's
+guardrails for autonomous decisions.
