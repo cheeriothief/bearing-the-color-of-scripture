@@ -88,7 +88,7 @@ export default function Read() {
       <p
         style={{
           padding: "0 var(--space-3)",
-          color: "var(--color-text-muted)",
+          color: "var(--color-text-muted-inset)",
           fontFamily: "var(--font-ui)",
           fontSize: 13,
         }}

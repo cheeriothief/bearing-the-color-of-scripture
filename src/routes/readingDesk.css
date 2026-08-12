@@ -1,7 +1,14 @@
 /* Reading Desk layout — mobile-first single column, tablet two-pane. */
 
 .reading-desk {
-  min-height: 60vh;
+  /* Full-bleed dark surface from the very top of the screen, matching the
+     mockup: the title and session controls sit ON the book cover, not on a
+     separate light header above it. Only the notebook pane (the "open
+     page") ever shows the cream surface -- everything else in this screen
+     is part of the dark cover. */
+  min-height: 100vh;
+  background: var(--color-bg-inset);
+  color: var(--color-text-inset);
 }
 
 .reading-desk__session {
@@ -16,9 +23,9 @@
   text-transform: uppercase;
   padding: 6px 12px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-inset);
   background: transparent;
-  color: var(--color-text-muted);
+  color: var(--color-text-muted-inset);
 }
 .reading-desk__session button[aria-pressed="true"] {
   background: var(--color-accent);
@@ -38,6 +45,7 @@
 }
 .reading-desk__list[data-hidden="true"] {
   display: none;
+
 }
 
 .reading-desk__notebook {

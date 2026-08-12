@@ -1,8 +1,16 @@
 * { box-sizing: border-box; }
+
+/*
+ * The outermost canvas is the "book cover" — dark and consistent across
+ * the whole app shell (header, nav) — with cream reserved specifically for
+ * "page" content (each route's <main>, the Reading Desk's notebook pane).
+ * This keeps every screen feeling like one continuous object instead of
+ * disconnected light/dark blocks stacked on top of each other.
+ */
 body {
   margin: 0;
-  background: var(--color-bg);
-  color: var(--color-text);
+  background: var(--color-bg-inset);
+  color: var(--color-text-inset);
   font-family: var(--font-body);
 }
 nav ul {
@@ -11,9 +19,9 @@ nav ul {
   gap: var(--space-3);
   padding: var(--space-2);
   margin: 0;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border-inset);
 }
-nav a { color: var(--color-text-muted); text-decoration: none; font-family: var(--font-ui); }
+nav a { color: var(--color-text-muted-inset); text-decoration: none; font-family: var(--font-ui); }
 nav a.active { color: var(--color-accent); }
 
 .app-header {
@@ -24,10 +32,13 @@ nav a.active { color: var(--color-accent); }
 .settings-link {
   font-size: 20px;
   text-decoration: none;
-  color: var(--color-text-muted);
+  color: var(--color-text-muted-inset);
 }
 .settings-link.active { color: var(--color-accent); }
 
+/* Each route's <main> is a "page" surface — cream by default. The Reading
+   Desk overrides this itself (readingDesk.css) since it has its own
+   internal dark/cream split rather than being a single flat page. */
 main {
   background: var(--color-bg);
   color: var(--color-text);

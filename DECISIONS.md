@@ -443,3 +443,37 @@ Reversible decisions:
 App-shell integration test of the Threshold gate) — 103 total, all passing.
 Production build verified clean, with the font-precache gap specifically checked
 by inspecting the generated service worker, not just trusting the build succeeded.
+
+## 2026-08-12 — Fixed a real visual disconnect on the Reading Desk
+
+User feedback after seeing the real app on-device: the Reading Desk "feels
+disconnected... too much of the lighter color... makes the UI feel a little bit
+cheap" compared to the mockup, even with real fonts now in place.
+
+Root cause: the mockup's dark surface ran full-bleed from the very top of the
+screen — title, session controls, everything sat directly on the book-cover-dark
+background. The real build instead had the Reading Desk's title/date/session
+switcher sitting on the generic cream page background (inherited from the app-wide
+`main` default), with the dark surface only starting at the reading-list pane below
+it. That created a visible seam between "light header" and "dark list," breaking
+the cohesive book-object feeling the mockup had. The same disconnect existed above
+and below the whole screen too — the header gear icon and the bottom nav bar both
+sat on the cream `body` background regardless of what was happening in `<main>`.
+
+Fix, two layers:
+- **`readingDesk.css`**: `.reading-desk` (the whole screen, not just the list pane)
+  now uses the dark inset background from the top. Title, date, and session buttons
+  sit directly on it, matching the mockup's full-bleed treatment. Only the notebook
+  pane still shows cream, as the intentional "open page" contrast.
+- **`index.css`**: the outermost canvas (`body`) switched from the cream `--color-bg`
+  to the dark `--color-bg-inset`, with the header and nav bar's colors updated to
+  their inset variants to match. Each route's `<main>` keeps the cream `--color-bg`
+  as its own default, so ordinary screens (Home, Journal, Library, Prayer, Settings)
+  now read as a cream "page" framed by a consistent dark chrome top and bottom,
+  rather than the previous arrangement, which was really just uncoordinated cream
+  everywhere with a dark box floating in the middle of Read specifically.
+
+This has no effect on Candlelight (bg and bg-inset are already identical there) and
+only a subtle effect on Minimal (bg and bg-inset are two very close near-white
+tones), so this was really a Prayer-Book-specific problem, exactly where the
+screenshot came from.
