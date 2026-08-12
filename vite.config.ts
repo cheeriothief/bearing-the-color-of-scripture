@@ -13,6 +13,14 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
+      workbox: {
+        // Default globPatterns don't include font files — without this,
+        // the app would silently fall back to system fonts offline
+        // instead of the bundled EB Garamond / Source Serif 4 / Atkinson
+        // Hyperlegible, breaking the "local-first, offline-first" promise
+        // for typography specifically.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+      },
       manifest: {
         name: 'Bearing the Color of Scripture',
         short_name: 'BCoS',

@@ -1,4 +1,65 @@
 /**
+ * Bundled font files — self-hosted, per the spec (never a remote Google
+ * Fonts CDN). See src/styles/fonts/README.md for provenance and licensing.
+ */
+@font-face {
+  font-family: "EB Garamond";
+  src: url("./fonts/EBGaramond.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "EB Garamond";
+  src: url("./fonts/EBGaramond-Italic.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Source Serif 4";
+  src: url("./fonts/SourceSerif4.woff2") format("woff2");
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Source Serif 4";
+  src: url("./fonts/SourceSerif4-Italic.woff2") format("woff2");
+  font-weight: 200 900;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("./fonts/AtkinsonHyperlegible-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("./fonts/AtkinsonHyperlegible-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("./fonts/AtkinsonHyperlegible-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("./fonts/AtkinsonHyperlegible-BoldItalic.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/**
  * Design tokens for the three named themes from the spec: Prayer Book
  * (default), Candlelight, and Minimal. Selected via a `data-theme`
  * attribute on <html>, applied in App.tsx from the persisted setting.
@@ -12,7 +73,10 @@
  * through typography (strikethrough, dimmed color) rather than color or
  * iconography.
  *
- * Font files themselves are NOT bundled yet — see src/styles/fonts/README.md.
+ * Font files are bundled and self-hosted — see src/styles/fonts/README.md
+ * for provenance and licensing. Fallback stacks (Georgia, system sans)
+ * remain in the font-family lists below purely as a flash-of-unstyled-text
+ * safety net while the woff2 files load.
  * Until they're added, these fall back gracefully to system serif/sans.
  */
 

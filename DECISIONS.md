@@ -373,3 +373,73 @@ Reversible decisions:
 including the repeated-encounter case, and Export — with real ZIP unzip-and-inspect
 round trips rather than just checking the function runs) — 90 total, all passing.
 Production build verified clean.
+
+## 2026-08-12 — Phase 6: Threshold, Home, Prayer Book, real fonts
+
+The atmospheric layer, plus the theming pass now has real typography instead of
+system-font fallbacks.
+
+- **Real bundled fonts**: EB Garamond, Source Serif 4, and Atkinson Hyperlegible
+  pulled directly from Google Fonts' own repository (all SIL Open Font License),
+  converted from the upstream .ttf files to .woff2 via `fonttools` (~3.7MB →
+  ~1.4MB). EB Garamond and Source Serif 4 are variable fonts (single file spans
+  the full weight range via `font-weight: <min> <max>` in the `@font-face` rule);
+  Atkinson Hyperlegible ships as four static weights since the Braille Institute
+  doesn't publish a variable version. License files kept alongside each family in
+  `src/styles/fonts/` for attribution.
+- **Fixed a real offline-support gap this surfaced**: the PWA's default precache
+  glob doesn't include font files, so the bundled fonts would have silently fallen
+  back to system fonts the moment the device went offline — directly undermining
+  the "local-first, offline-first" requirement for exactly the typography the spec
+  cared enough about to name three specific families for. Fixed by adding `woff2`
+  to `vite-plugin-pwa`'s `globPatterns`; precache went from 6 entries (595KB) to 16
+  entries (2030KB) once fonts were actually included. Caught by inspecting the
+  generated service worker directly (`grep woff2 dist/sw.js`) rather than assuming
+  the default config was sufficient.
+- **`src/domain/prayerBook.ts`**: five historic prayers (a Prayer of St. Chrysostom
+  and Evening/Morning Collects from the 1662 Book of Common Prayer, the Prayer of
+  St. Ephrem, and the Jesus Prayer), each properly attributed. Every text here is
+  either an ancient liturgical prayer in a long-traditional English rendering, or
+  drawn directly from the 1662 BCP — unambiguously public domain, never a modern
+  copyrighted translation.
+- **Threshold** (`src/routes/Threshold.tsx`): shown once per calendar day (the
+  middle option of the spec's three choices — "every launch" felt like it would
+  become an annoyance fast, "configurable time away" adds a setting with no clear
+  default), gating the whole app on first launch each day. The Enter button is
+  available the instant the screen renders — nothing artificially delays it.
+  Covered by an end-to-end test that renders the real `<App />` shell and confirms
+  Threshold blocks the primary nav on first launch, entering reveals it, and it
+  doesn't reappear on a second render the same day.
+- **Threshold draws only from the Prayer Book, never a Scripture excerpt** — the
+  spec allows either, but this app never contains Bible text anywhere, for any
+  reason (the physical Bible is the sanctuary; the app is only ever the narthex).
+  Using prayers exclusively keeps that boundary completely clean and sidesteps any
+  question of which Bible translation's licensing would even apply to a threshold
+  quote.
+- **Home** (`src/routes/Home.tsx`): four quiet destination links and one optional,
+  non-numeric sentence about what's left today ("Evening readings remain.") — no
+  dashboard, no counts, no streak language. The message logic itself
+  (`src/domain/homeMessage.ts`) is a small pure function, tested independently of
+  any UI, that returns null entirely when nothing remains rather than announcing
+  completion.
+- **Prayer** (`src/routes/Prayer.tsx`): now a real, small list of the bundled
+  prayers rather than a placeholder.
+
+Reversible decisions:
+
+- **Threshold trigger is "once per day," not "every launch" or "configurable time
+  away."** Documented above; easy to make configurable later if it turns out to
+  feel wrong in practice.
+- **Only 5 prayers in the Prayer Book for now.** The spec explicitly wants this
+  "intentionally small," and 5 well-attributed, verifiably public-domain texts
+  seemed like a better starting point than stretching to include more at the cost
+  of attribution rigor.
+- **`.woff2` only, no `.woff` or `.ttf` fallback bundled.** Every browser capable of
+  running this PWA (installable, service-worker-based) also supports woff2; adding
+  legacy formats would roughly double the font payload for no real benefit to any
+  device this app can actually run on.
+
+18 new tests (Threshold logic, Home's remaining-message logic, and a full
+App-shell integration test of the Threshold gate) — 103 total, all passing.
+Production build verified clean, with the font-precache gap specifically checked
+by inspecting the generated service worker, not just trusting the build succeeded.

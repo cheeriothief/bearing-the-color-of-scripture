@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import Home from "./routes/Home";
@@ -7,7 +7,13 @@ import Journal from "./routes/Journal";
 import Library from "./routes/Library";
 import Prayer from "./routes/Prayer";
 import Settings from "./routes/Settings";
+import Threshold from "./routes/Threshold";
 import { getTheme } from "./services/settingsRepo";
+import { getLastThresholdDate, markThresholdShown } from "./services/appStateRepo";
+import { shouldShowThreshold } from "./domain/threshold";
+import { SystemClock, localDateToISO } from "./services/clock";
+
+const clock = new SystemClock();
 
 /**
  * Primary persistent navigation, per the spec — deliberately limited to
@@ -25,12 +31,28 @@ const NAV_ITEMS = [
 
 export default function App() {
   const theme = useLiveQuery(() => getTheme(), []);
+  const [thresholdVisible, setThresholdVisible] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (theme) {
       document.documentElement.setAttribute("data-theme", theme);
     }
   }, [theme]);
+
+  useEffect(() => {
+    getLastThresholdDate().then((last) => {
+      setThresholdVisible(shouldShowThreshold(last, clock.today()));
+    });
+  }, []);
+
+  async function handleEnter() {
+    await markThresholdShown(localDateToISO(clock.today()));
+    setThresholdVisible(false);
+  }
+
+  if (thresholdVisible) {
+    return <Threshold onEnter={handleEnter} />;
+  }
 
   return (
     <div className="app-shell">

@@ -7,30 +7,34 @@ itself, it helps you keep rhythm with a physical Bible you read separately.
 See `DECISIONS.md` for the project's decision log, including corrections
 made to the reading-plan dataset and the rationale behind them.
 
-## Status: Phase 5 — Library
+## Status: Phase 6 — Threshold, Home, Prayer Book, real fonts
 
-The archive is real: Scripture Notes browsable by biblical book, a Tags
-index, a restrained Progress view (counts and books touched, never
-performance), and Export (both a human-readable Markdown .zip and a
-machine-readable JSON backup).
+The atmospheric layer is real now, and the theming pass has actual
+typography — EB Garamond, Source Serif 4, and Atkinson Hyperlegible are
+bundled and self-hosted, not falling back to system fonts.
 
-What's new since Phase 4:
+What's new since Phase 5:
 
-- **`src/domain/bibleBooks.ts`** — canonical 66-book order, verified to
-  exactly match every book name the dataset actually uses
-- **`src/services/scriptureNotesRepo.ts`** — passage notes grouped by book
-- **`src/services/progressRepo.ts`** — per-stream completion counts, books
-  touched, and repeated-encounter tracking
-- **`src/services/exportService.ts`** — Markdown ZIP export (via `fflate`)
-  and JSON backup, kept fully independent of each other per the spec
-- **`src/routes/Library.tsx`** — the four sections as an in-screen tab
-  switcher
-- **13 new tests**, including real ZIP round-trip verification — 90 total,
-  all passing
+- **Real bundled fonts** (`src/styles/fonts/`) — pulled from Google Fonts'
+  own repository, converted to .woff2, properly licensed (SIL OFL)
+- **Fixed a real offline gap**: the PWA precache didn't include font files
+  by default, which would have silently broken offline typography — see
+  `DECISIONS.md` for how this was caught and fixed
+- **`src/domain/prayerBook.ts`** — 5 historic, properly attributed prayers
+  (all verifiably public domain: 1662 Book of Common Prayer texts and
+  ancient liturgical prayers in traditional renderings)
+- **`src/routes/Threshold.tsx`** — shown once per day, gates the app on
+  first launch, Enter available immediately, draws only from the Prayer
+  Book (never Scripture — the app never contains Bible text, anywhere)
+- **`src/routes/Home.tsx`** — atmospheric, four quiet destinations, one
+  optional non-numeric sentence about what's left today
+- **`src/routes/Prayer.tsx`** — now real content instead of a placeholder
+- **18 new tests**, including a full App-shell integration test of the
+  Threshold gate — 103 total, all passing
 
-**Known gap, called out explicitly rather than glossed over:** there is no
-restore/import from a backup yet — only export. See `DECISIONS.md` for why
-that's a deliberate scope boundary for this phase, not an oversight.
+**Known gap, still open:** there is still no restore/import from a backup
+— only export (see Phase 5 notes in `DECISIONS.md`). Circling back to this
+after Phase 6.
 
 ## Running it
 

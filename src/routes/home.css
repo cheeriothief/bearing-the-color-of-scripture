@@ -1,0 +1,39 @@
+.home {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+}
+.home__title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  margin-bottom: var(--space-2);
+}
+.home__message {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-5);
+  min-height: 18px;
+}
+.home__destinations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 280px;
+}
+.home__destination {
+  display: block;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 18px;
+}
