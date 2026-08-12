@@ -627,3 +627,63 @@ built `dist/` output directly: confirmed all four icon files land in the output,
 the manifest's icon `src` paths and `start_url`/`scope` correctly include the
 GitHub Pages subpath, and the `apple-touch-icon` link tag resolves to the correct
 final URL. All 122 existing tests still pass; production build verified clean.
+
+## 2026-08-12 — Chrome/interaction polish pass
+
+Requested as a general "make it feel finished" pass across the whole app shell,
+rather than one specific feature. Everything here is global CSS/HTML — no new
+domain logic, no new screens.
+
+- **Real iOS standalone-app chrome** (`index.html`): `apple-mobile-web-app-capable`,
+  `apple-mobile-web-app-status-bar-style: black-translucent`, and
+  `apple-mobile-web-app-title`. Without these, the installed PWA still shows
+  Safari's own browser chrome around it and a plain default status bar, rather than
+  behaving like a genuinely installed app. `viewport-fit=cover` was added alongside
+  this, which is required for `env(safe-area-inset-*)` to resolve to real values —
+  added corresponding safe-area padding to the header, nav, and Threshold (the two
+  places that sit directly against the notch/status-bar or home-indicator area) so
+  content doesn't render underneath either.
+- **Themed scrollbars, text selection, and focus rings** (`index.css`): all three
+  default to generic OS/browser styling (blue selection, blue focus ring, plain
+  gray scrollbar) that clashed visibly against every theme here. All three now pull
+  from `--color-accent`, so they read as part of the app rather than as
+  browser-chrome bleeding through.
+- **Tactile button feedback**: every button in the app now has a shared hover
+  (slight opacity dip) and press (slight scale-down + opacity dip) transition,
+  applied globally rather than per-component, so every screen's buttons — Reading
+  Desk actions, Settings, Library tabs and exports, Journal saves — feel
+  consistently responsive without having needed to touch each screen's own styles.
+- **Native form controls themed via `accent-color`**: radio buttons (Settings'
+  theme picker) and the date input (Settings' start-date field) now tint with
+  `--color-accent` instead of the OS default blue — a one-line CSS property, not a
+  custom-built replacement control, so this stayed low-risk.
+- **Smooth theme transitions**: switching themes in Settings now cross-fades
+  (`transition: background-color, color`) rather than hard-cutting instantly between
+  two entire palettes, which read as a visual glitch before this.
+- **A very subtle grain texture** on the dark "book cover" surface (`body::before`,
+  an inline SVG turbulence filter at ~3.5% opacity, blend-mode `overlay`) — gives
+  the flat digital color a little tactile depth without pretending to be a paper
+  texture. This stays well inside the spec's "no faux parchment, no skeuomorphism"
+  boundary: it's uniform noise on a solid color, not an image of paper or parchment,
+  and it's applied to the *cover* surface, never to the notebook/page content itself.
+- **A gentle fade-in on the Threshold screen's text and Enter button** (staggered,
+  ~1.1s, respects `prefers-reduced-motion`) — the one place in the app where a
+  small moment of orchestrated motion earns its keep, since Threshold's whole job
+  is being a deliberate pause before entering the app.
+
+Reversible decisions:
+
+- **No page-transition animation between routes.** Considered, but React Router
+  doesn't animate this natively, and adding a transition library for one subtle
+  effect felt like more risk (dependency weight, potential animation-interruption
+  bugs) than the payoff justified for this pass. Worth reconsidering later with a
+  proper animation library if it still feels worth doing.
+- **Grain texture only on the dark surface, not the cream "page" surface.** The
+  cream notebook/page areas are meant to read as the actual writing surface —
+  adding texture there risked nudging toward the "faux parchment" look the spec
+  explicitly rules out. The dark cover surface is more like a physical object's
+  exterior (a book cover, a desk), where a little texture reads as material rather
+  than as a Bible-app cliché.
+
+No new tests (this is presentation-layer CSS/HTML, not new logic to verify) — all
+122 existing tests still pass unaffected, and the production build is clean.
