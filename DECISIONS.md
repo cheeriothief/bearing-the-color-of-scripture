@@ -86,3 +86,52 @@ process:
 Nothing in this phase touches the authoritative dataset, destroys user data,
 introduces a backend, or adds gamification — all out of bounds per the spec's
 guardrails for autonomous decisions.
+
+## 2026-08-12 — Phase 2: first usable milestone
+
+Built the first real, tappable version of the app per the spec's own milestone
+definition: today's readings resolve correctly, split by Morning/Evening, a reading
+can be marked complete, a passage note can be written and saved, everything works
+offline (IndexedDB only, no network calls anywhere in this phase), and shifting one
+stream independently works and is provably isolated from the other four.
+
+Reversible decisions made, recorded per the ambiguity-handling process:
+
+- **Reading year bootstrapping:** Phase 2 has no start-date-picker UI yet, so the app
+  auto-creates a single reading year on first launch, anchored to *today's* date
+  rather than the spec's default September 1. This was chosen so the milestone is
+  immediately usable the moment it's opened, regardless of what day that happens to
+  be — waiting for a specific calendar date to test the first usable build didn't
+  seem in the spirit of "first usable milestone." A proper start-date choice (and the
+  spec's multi-Reading-Year support) is real, deferred work, not something this
+  decision forecloses — everything is already keyed by `readingYearId`.
+- **Default Morning/Evening assignment:** Psalms, Proverbs, and Gospel default to
+  Morning; Old Testament and New Testament default to Evening. Arbitrary but
+  reasonable starting point, fully user-reassignable from the Reading Desk, and only
+  ever applied before the user has expressed a preference.
+- **Time-of-day session default:** before noon shows Morning, noon or later shows
+  Evening. Simple midpoint split; the user can always switch sessions manually
+  regardless of this default.
+- **Shift Stream delay increment:** each "Shift to tomorrow" action records a 1-day
+  delay. If a stream falls behind on consecutive days, each action stacks another
+  StreamShiftEvent (already proven to accumulate correctly in the Phase 1 tests)
+  rather than requiring the user to specify a delay amount.
+- **Completion control is a plain button, not the swipe gesture.** The spec's
+  preferred interaction is a left-to-right swipe with a non-swipe fallback for
+  accessibility; Phase 2 only needed to prove completion persists correctly, not the
+  final interaction design, so only the accessible fallback was built. The swipe
+  gesture itself belongs in Phase 3 alongside the rest of the Reading Desk's visual
+  design.
+- **Passage notes are plain, unstyled textareas.** Markdown rendering, tag parsing,
+  and the "N previous encounters" indicator are Phase 4 concerns — Phase 2 only needed
+  to prove a note ties to one specific encounter (not the passage generally), which
+  is now covered by a test using two different ordinals for the same Matthew 5
+  chapter.
+- **No Threshold, Home, or Library screens are wired into navigation flow yet** —
+  the nav bar links to them (from Phase 1) but they're still placeholders. Read is
+  the only screen with real behavior in Phase 2.
+
+All new domain and repository logic is covered by tests (13 new tests: repository
+behavior, plus a component-level smoke test that renders the Reading Desk against a
+real in-memory IndexedDB and confirms completion actually persists) — 37 total,
+all passing. Production build verified clean.

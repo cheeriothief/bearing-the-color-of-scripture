@@ -7,34 +7,32 @@ itself, it helps you keep rhythm with a physical Bible you read separately.
 See `DECISIONS.md` for the project's decision log, including corrections
 made to the reading-plan dataset and the rationale behind them.
 
-## Status: Phase 1 — invisible foundation
+## Status: Phase 2 — first usable milestone
 
-There is no real UI yet, on purpose. This phase is the plumbing everything
-else depends on: the local database, the reading-plan domain model, the
-calendar/shift engine, and the tests that prove it's correct. Full UI work
-starts once this foundation is trusted.
+The Reading Desk is real and working: today's five readings resolve correctly,
+split into Morning/Evening sessions, a reading can be marked complete, a
+passage note can be written and saved, everything works fully offline, and
+one stream can be shifted independently of the other four. This is the
+spec's own defined "first internal usable milestone" — ugly, unstyled, but
+real. The visual design (swipe gestures, two-pane tablet layout, previous-
+encounter indicators, Markdown rendering) is Phase 3+.
 
-What exists right now:
+What's new since Phase 1:
 
-- **`src/data/reading-plan.json`** — the authoritative 365-day dataset (see
-  `DECISIONS.md` for how it was validated and corrected)
-- **`src/domain/`** — the reading-plan domain model:
-  - `datasetAdapter.ts` — loads and validates the dataset; the only file
-    that reads the JSON directly
-  - `calendarMapping.ts` — ordinal ↔ calendar date mapping, including the
-    Feb 29 "no new reading" rule
-  - `streamShift.ts` — the auditable `StreamShiftEvent` model; each of the
-    five streams can fall behind independently
-  - `scheduleResolver.ts` — resolves "what should stream S show on date D",
-    the function everything else will build on
-- **`src/services/clock.ts`** — an injectable Clock, so time-dependent logic
-  (leap years, month boundaries) is testable without faking the system
-  clock everywhere
-- **`src/services/database.ts`** — the Dexie/IndexedDB schema, including
-  lazy encounter creation (rows are only created when a reading is actually
-  completed or noted, never pre-generated on onboarding)
-- **`tests/`** — 24 tests covering the dataset, calendar mapping (including
-  leap-year edge cases), stream shifting, and the schedule resolver
+- **`src/routes/Read.tsx`** — the actual Reading Desk screen: resolves
+  today's readings, lets you switch sessions, mark things complete, shift a
+  stream, and write/save a passage note
+- **`src/services/readingYearRepo.ts`** — bootstraps a reading year on first
+  launch (see `DECISIONS.md` for why it starts today rather than the spec's
+  default September 1 — this is a Phase 2 shortcut, not a spec change)
+- **`src/services/settingsRepo.ts`** — persisted per-stream Morning/Evening
+  assignment
+- **`src/services/shiftEventRepo.ts`** — records Shift Stream decisions
+- **`src/services/encounterActions.ts`** — completion toggling and passage
+  notes, both backed by lazy encounter creation
+- **13 new tests** (repository behavior + a component-level smoke test that
+  renders the real Reading Desk against an in-memory IndexedDB and confirms
+  completion actually persists) — 37 total, all passing
 
 ## Running it
 

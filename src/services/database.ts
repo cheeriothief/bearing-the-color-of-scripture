@@ -86,7 +86,7 @@ const db = new Dexie("BearingTheColorOfScripture") as Dexie & {
 // Version 1 schema. Only fields that need indexing are listed after the
 // primary key — Dexie doesn't require every field to be declared.
 db.version(1).stores({
-  readingYears: "id, startDate",
+  readingYears: "id, startDate, createdAt",
   streamShiftEvents: "id, readingYearId, stream, startingOrdinal",
   encounters: "id, readingYearId, stream, ordinal, [readingYearId+stream+ordinal]",
   passageNotes: "id, encounterId",
