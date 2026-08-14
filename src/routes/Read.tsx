@@ -17,10 +17,9 @@ import {
   countEngagedEncounters,
   findEncounter,
   getPassageNote,
-  savePassageNote,
+  savePassageNoteForReading,
   toggleCompletion,
 } from "../services/encounterActions";
-import { getOrCreateEncounter } from "../services/database";
 import MarkdownView from "../components/MarkdownView";
 import "./readingDesk.css";
 import "./journal.css";
@@ -258,18 +257,17 @@ function Notebook({
 }) {
   const { stream, ordinal, reference } = resolved;
   const [noteDraft, setNoteDraft] = useState("");
-  const [encounterId, setEncounterId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [editingNote, setEditingNote] = useState(false);
+  const saveInFlight = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setLoaded(false);
     (async () => {
-      const enc = await getOrCreateEncounter(readingYearId, stream, ordinal);
-      const existing = await getPassageNote(enc.id);
+      const enc = await findEncounter(readingYearId, stream, ordinal);
+      const existing = enc ? await getPassageNote(enc.id) : "";
       if (!cancelled) {
-        setEncounterId(enc.id);
         setNoteDraft(existing);
         setEditingNote(!existing.trim()); // start in edit mode only if there's nothing written yet
         setLoaded(true);
@@ -280,10 +278,23 @@ function Notebook({
     };
   }, [readingYearId, stream, ordinal]);
 
-  async function handleSave() {
-    if (!encounterId) return;
-    await savePassageNote(encounterId, noteDraft);
-    setEditingNote(false);
+  function handleSave(): Promise<void> {
+    if (saveInFlight.current) return saveInFlight.current;
+
+    const save = (async () => {
+      const encounter = await savePassageNoteForReading(
+        readingYearId,
+        stream,
+        ordinal,
+        noteDraft
+      );
+      if (encounter || noteDraft.trim()) setEditingNote(false);
+    })();
+    saveInFlight.current = save;
+    save.finally(() => {
+      if (saveInFlight.current === save) saveInFlight.current = null;
+    });
+    return save;
   }
 
   async function handleShift() {
