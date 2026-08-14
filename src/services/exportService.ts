@@ -1,8 +1,11 @@
 import { strToU8, zipSync } from "fflate";
 import db from "./database";
-import { getPlanDay } from "../domain/datasetAdapter";
+import { getPlanDay, loadDataset } from "../domain/datasetAdapter";
 import { extractTags } from "../domain/tagParser";
 import { localDateToISO } from "./clock";
+import { parseJsonBackup } from "./backupValidation";
+
+export { InvalidBackupError, parseJsonBackup, type ParsedBackup } from "./backupValidation";
 
 const ROOT = "Bearing the Color of Scripture";
 
@@ -115,6 +118,7 @@ export async function buildJsonBackup(): Promise<string> {
   const backup = {
     backupVersion: 1,
     exportedAt: new Date().toISOString(),
+    readingPlanDatasetVersion: loadDataset().datasetVersion,
     readingYears: await db.readingYears.toArray(),
     streamShiftEvents: await db.streamShiftEvents.toArray(),
     encounters: await db.encounters.toArray(),
@@ -126,68 +130,6 @@ export async function buildJsonBackup(): Promise<string> {
     appState: await db.appState.toArray(),
   };
   return JSON.stringify(backup, null, 2);
-}
-
-const BACKUP_TABLE_KEYS = [
-  "readingYears",
-  "streamShiftEvents",
-  "encounters",
-  "passageNotes",
-  "dailyReflections",
-  "monthlyReflections",
-  "tagReferences",
-  "settings",
-  "appState",
-] as const;
-
-export interface ParsedBackup {
-  backupVersion: number;
-  exportedAt: string;
-  readingYears: unknown[];
-  streamShiftEvents: unknown[];
-  encounters: unknown[];
-  passageNotes: unknown[];
-  dailyReflections: unknown[];
-  monthlyReflections: unknown[];
-  tagReferences: unknown[];
-  settings: unknown[];
-  appState: unknown[];
-}
-
-export class InvalidBackupError extends Error {}
-
-/**
- * Parse and validate a JSON backup's shape before anything touches the
- * database. Deliberately fails loudly on anything unexpected rather than
- * silently importing a partial or malformed file — a bad restore should
- * never leave the app in a worse state than before the attempt.
- */
-export function parseJsonBackup(json: string): ParsedBackup {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(json);
-  } catch {
-    throw new InvalidBackupError("That file isn't valid JSON.");
-  }
-
-  if (typeof parsed !== "object" || parsed === null) {
-    throw new InvalidBackupError("That file doesn't look like a backup.");
-  }
-  const obj = parsed as Record<string, unknown>;
-
-  if (obj.backupVersion !== 1) {
-    throw new InvalidBackupError(
-      `Unrecognized backup version (${String(obj.backupVersion)}). This app only knows how to restore version 1 backups.`
-    );
-  }
-
-  for (const key of BACKUP_TABLE_KEYS) {
-    if (!Array.isArray(obj[key])) {
-      throw new InvalidBackupError(`Backup is missing or has a malformed "${key}" section.`);
-    }
-  }
-
-  return obj as unknown as ParsedBackup;
 }
 
 /**
@@ -226,15 +168,15 @@ export async function restoreFromJsonBackup(json: string): Promise<void> {
       ]);
 
       await Promise.all([
-        db.readingYears.bulkAdd(backup.readingYears as never[]),
-        db.streamShiftEvents.bulkAdd(backup.streamShiftEvents as never[]),
-        db.encounters.bulkAdd(backup.encounters as never[]),
-        db.passageNotes.bulkAdd(backup.passageNotes as never[]),
-        db.dailyReflections.bulkAdd(backup.dailyReflections as never[]),
-        db.monthlyReflections.bulkAdd(backup.monthlyReflections as never[]),
-        db.tagReferences.bulkAdd(backup.tagReferences as never[]),
-        db.settings.bulkAdd(backup.settings as never[]),
-        db.appState.bulkAdd(backup.appState as never[]),
+        db.readingYears.bulkAdd(backup.readingYears),
+        db.streamShiftEvents.bulkAdd(backup.streamShiftEvents),
+        db.encounters.bulkAdd(backup.encounters),
+        db.passageNotes.bulkAdd(backup.passageNotes),
+        db.dailyReflections.bulkAdd(backup.dailyReflections),
+        db.monthlyReflections.bulkAdd(backup.monthlyReflections),
+        db.tagReferences.bulkAdd(backup.tagReferences),
+        db.settings.bulkAdd(backup.settings),
+        db.appState.bulkAdd(backup.appState),
       ]);
     }
   );
