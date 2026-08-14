@@ -2,6 +2,7 @@ import { strToU8, zipSync } from "fflate";
 import db from "./database";
 import { getPlanDay } from "../domain/datasetAdapter";
 import { extractTags } from "../domain/tagParser";
+import { localDateToISO } from "./clock";
 
 const ROOT = "Bearing the Color of Scripture";
 
@@ -23,6 +24,10 @@ function slugify(text: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+function readingYearDirectory(readingYearId: string, startDate: string): string {
+  return `${startDate}--${encodeURIComponent(readingYearId)}`;
 }
 
 /**
@@ -60,6 +65,8 @@ export async function buildMarkdownExportZip(): Promise<Uint8Array> {
     if (!note.markdown.trim()) continue;
     const encounter = await db.encounters.get(note.encounterId);
     if (!encounter) continue;
+    const readingYear = await db.readingYears.get(encounter.readingYearId);
+    const readingYearStartDate = readingYear ? localDateToISO(readingYear.startDate) : "unknown";
     const reference = getPlanDay(encounter.ordinal)?.streams[encounter.stream];
     if (!reference) continue;
 
@@ -70,11 +77,16 @@ export async function buildMarkdownExportZip(): Promise<Uint8Array> {
         reference: reference.display,
         stream: encounter.stream,
         ordinal: String(encounter.ordinal),
+        readingYearId: encounter.readingYearId,
+        readingYearStartDate,
         tags,
       }) + note.markdown;
 
     const filename = `${String(encounter.ordinal).padStart(3, "0")}-${slugify(reference.display)}.md`;
-    files[`${ROOT}/Passage Notes/${reference.book}/${filename}`] = strToU8(content);
+    const yearDirectory = readingYearDirectory(encounter.readingYearId, readingYearStartDate);
+    files[
+      `${ROOT}/Passage Notes/Reading Years/${yearDirectory}/${reference.book}/${filename}`
+    ] = strToU8(content);
   }
 
   // Metadata: reading progress, per stream, in plain Markdown — not a
