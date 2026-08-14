@@ -1,4 +1,4 @@
-import Dexie, { type EntityTable } from "dexie";
+import Dexie, { type EntityTable, type Transaction } from "dexie";
 import type { ReadingYear, StreamShiftEvent, StreamKey } from "../domain/types";
 
 /**
@@ -71,7 +71,7 @@ export interface AppStateRecord {
   value: unknown;
 }
 
-const db = new Dexie("BearingTheColorOfScripture") as Dexie & {
+export type AppDatabase = Dexie & {
   readingYears: EntityTable<ReadingYear, "id">;
   streamShiftEvents: EntityTable<StreamShiftEvent, "id">;
   encounters: EntityTable<EncounterRecord, "id">;
@@ -83,9 +83,7 @@ const db = new Dexie("BearingTheColorOfScripture") as Dexie & {
   appState: EntityTable<AppStateRecord, "key">;
 };
 
-// Version 1 schema. Only fields that need indexing are listed after the
-// primary key — Dexie doesn't require every field to be declared.
-db.version(1).stores({
+const VERSION_1_STORES = {
   readingYears: "id, startDate, createdAt",
   streamShiftEvents: "id, readingYearId, stream, startingOrdinal",
   encounters: "id, readingYearId, stream, ordinal, [readingYearId+stream+ordinal]",
@@ -95,7 +93,105 @@ db.version(1).stores({
   tagReferences: "id, tag, sourceType, sourceId",
   settings: "key",
   appState: "key",
-});
+};
+
+const VERSION_3_STORES = {
+  ...VERSION_1_STORES,
+  encounters: "id, readingYearId, stream, ordinal, &[readingYearId+stream+ordinal]",
+};
+
+function compareCreatedThenId(
+  a: { createdAt: string; id: string },
+  b: { createdAt: string; id: string }
+): number {
+  return a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id);
+}
+
+/**
+ * Version 1 allowed duplicate logical encounters. Reconcile them before the
+ * following schema version creates the unique compound index. The oldest
+ * encounter id survives, completion is preserved if any duplicate was
+ * complete, and notes/tags are repointed to it. Distinct non-empty note text
+ * is never guessed at or discarded: the upgrade aborts atomically instead.
+ */
+async function reconcileDuplicateEncounters(transaction: Transaction): Promise<void> {
+  const encounters = transaction.table<EncounterRecord, string>("encounters");
+  const passageNotes = transaction.table<PassageNoteRecord, string>("passageNotes");
+  const tagReferences = transaction.table<TagReferenceRecord, string>("tagReferences");
+  const groups = new Map<string, EncounterRecord[]>();
+
+  for (const encounter of await encounters.toArray()) {
+    const key = `${encounter.readingYearId}\u0000${encounter.stream}\u0000${encounter.ordinal}`;
+    const group = groups.get(key) ?? [];
+    group.push(encounter);
+    groups.set(key, group);
+  }
+
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    group.sort(compareCreatedThenId);
+    const survivor = group[0];
+    const duplicateIds = new Set(group.map(({ id }) => id));
+    const completedAt = group
+      .map((encounter) => encounter.completedAt)
+      .filter((value): value is string => value !== null)
+      .sort()[0] ?? null;
+    if (survivor.completedAt !== completedAt) {
+      await encounters.update(survivor.id, { completedAt });
+    }
+
+    const notes = (await passageNotes.toArray())
+      .filter((note) => duplicateIds.has(note.encounterId))
+      .sort(compareCreatedThenId);
+    const distinctAuthoredContent = new Set(
+      notes.map((note) => note.markdown).filter((markdown) => markdown.trim())
+    );
+    if (distinctAuthoredContent.size > 1) {
+      throw new Error(
+        `Cannot safely merge duplicate encounters for ${survivor.readingYearId}/${survivor.stream}/${survivor.ordinal}: conflicting passage notes require manual recovery.`
+      );
+    }
+
+    const authoredMarkdown = distinctAuthoredContent.values().next().value as string | undefined;
+    const keeper = notes.find((note) => authoredMarkdown !== undefined && note.markdown === authoredMarkdown)
+      ?? notes[0];
+    if (keeper) {
+      if (keeper.encounterId !== survivor.id) {
+        await passageNotes.update(keeper.id, { encounterId: survivor.id });
+      }
+      const noteIds = new Set(notes.map(({ id }) => id));
+      const tags = (await tagReferences.toArray())
+        .filter((tag) => tag.sourceType === "passageNote" && noteIds.has(tag.sourceId))
+        .sort(compareCreatedThenId);
+      const keptTags = new Map<string, TagReferenceRecord>();
+      for (const tag of tags) {
+        const prior = keptTags.get(tag.tag);
+        if (prior) {
+          await tagReferences.delete(tag.id);
+        } else {
+          keptTags.set(tag.tag, tag);
+          if (tag.sourceId !== keeper.id) await tagReferences.update(tag.id, { sourceId: keeper.id });
+        }
+      }
+      await passageNotes.bulkDelete(notes.filter((note) => note.id !== keeper.id).map(({ id }) => id));
+    }
+
+    await encounters.bulkDelete(group.slice(1).map(({ id }) => id));
+  }
+}
+
+export function createAppDatabase(name = "BearingTheColorOfScripture"): AppDatabase {
+  const database = new Dexie(name) as AppDatabase;
+  database.version(1).stores(VERSION_1_STORES);
+  // Version 2 removes legacy duplicates while the compound index is still
+  // non-unique. Version 3 can then add the unique index without upgrade-time
+  // ConstraintErrors from pre-existing data.
+  database.version(2).stores(VERSION_1_STORES).upgrade(reconcileDuplicateEncounters);
+  database.version(3).stores(VERSION_3_STORES);
+  return database;
+}
+
+const db = createAppDatabase();
 
 export default db;
 
@@ -110,20 +206,33 @@ export async function getOrCreateEncounter(
   stream: StreamKey,
   ordinal: number
 ): Promise<EncounterRecord> {
-  const existing = await db.encounters
-    .where("[readingYearId+stream+ordinal]")
-    .equals([readingYearId, stream, ordinal])
-    .first();
-  if (existing) return existing;
+  return db.transaction("rw", db.encounters, async () => {
+    const logicalKey: [string, StreamKey, number] = [readingYearId, stream, ordinal];
+    const existing = await db.encounters
+      .where("[readingYearId+stream+ordinal]")
+      .equals(logicalKey)
+      .first();
+    if (existing) return existing;
 
-  const record: EncounterRecord = {
-    id: crypto.randomUUID(),
-    readingYearId,
-    stream,
-    ordinal,
-    completedAt: null,
-    createdAt: new Date().toISOString(),
-  };
-  await db.encounters.add(record);
-  return record;
+    const record: EncounterRecord = {
+      id: crypto.randomUUID(),
+      readingYearId,
+      stream,
+      ordinal,
+      completedAt: null,
+      createdAt: new Date().toISOString(),
+    };
+    try {
+      await db.encounters.add(record);
+      return record;
+    } catch (error) {
+      if (!(error instanceof Dexie.ConstraintError)) throw error;
+      const winner = await db.encounters
+        .where("[readingYearId+stream+ordinal]")
+        .equals(logicalKey)
+        .first();
+      if (!winner) throw error;
+      return winner;
+    }
+  });
 }
