@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import db from "../src/services/database";
+import db, { getOrCreateEncounter, type EncounterRecord } from "../src/services/database";
 import {
   toggleCompletion,
   findEncounter,
@@ -58,6 +58,59 @@ describe("encounterActions — lazy creation", () => {
     expect(result.completedAt).toBeNull();
     const all = await db.encounters.toArray();
     expect(all).toHaveLength(1);
+  });
+
+  it("resolves simultaneous creation callers to one stored encounter", async () => {
+    const results = await Promise.all(
+      Array.from({ length: 12 }, () => getOrCreateEncounter("year-1", "psalms", 1))
+    );
+
+    expect(new Set(results.map(({ id }) => id)).size).toBe(1);
+    expect(await db.encounters.toArray()).toHaveLength(1);
+  });
+
+  it("prevents direct insertion of a duplicate logical encounter", async () => {
+    const first = await getOrCreateEncounter("year-1", "psalms", 1);
+    const duplicate: EncounterRecord = { ...first, id: crypto.randomUUID() };
+
+    await expect(db.encounters.add(duplicate)).rejects.toMatchObject({ name: "ConstraintError" });
+    expect(await db.encounters.toArray()).toEqual([first]);
+  });
+
+  it("allows distinct streams and ordinals to create distinct encounters", async () => {
+    const results = await Promise.all([
+      getOrCreateEncounter("year-1", "psalms", 1),
+      getOrCreateEncounter("year-1", "psalms", 2),
+      getOrCreateEncounter("year-1", "gospel", 1),
+    ]);
+
+    expect(new Set(results.map(({ id }) => id)).size).toBe(3);
+    expect(await db.encounters.count()).toBe(3);
+  });
+
+  it("does not duplicate encounters during simultaneous completion operations", async () => {
+    await Promise.all([
+      toggleCompletion("year-1", "psalms", 1),
+      toggleCompletion("year-1", "psalms", 1),
+      toggleCompletion("year-1", "psalms", 1),
+    ]);
+
+    expect(await db.encounters.count()).toBe(1);
+  });
+
+  it("shares one encounter between simultaneous completion and note save", async () => {
+    const [completed, noted] = await Promise.all([
+      toggleCompletion("year-1", "psalms", 1),
+      savePassageNoteForReading("year-1", "psalms", 1, "Concurrent note"),
+    ]);
+    const encounters = await db.encounters.toArray();
+
+    expect(encounters).toHaveLength(1);
+    expect(completed.id).toBe(encounters[0].id);
+    expect(noted?.id).toBe(encounters[0].id);
+    expect(encounters[0].completedAt).not.toBeNull();
+    expect(await getPassageNote(encounters[0].id)).toBe("Concurrent note");
+    expect((await db.passageNotes.toArray())[0].encounterId).toBe(encounters[0].id);
   });
 });
 
