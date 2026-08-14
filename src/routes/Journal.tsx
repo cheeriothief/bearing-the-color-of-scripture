@@ -96,7 +96,19 @@ function ReflectionEditor({
           </div>
         </>
       ) : (
-        <div onClick={beginEditing} className="reflection-view" role="button" tabIndex={0}>
+        <div
+          onClick={beginEditing}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              beginEditing();
+            }
+          }}
+          className="reflection-view"
+          role="button"
+          tabIndex={0}
+          aria-label={`Edit ${title}`}
+        >
           {markdown.trim() ? (
             <MarkdownView markdown={markdown} />
           ) : (

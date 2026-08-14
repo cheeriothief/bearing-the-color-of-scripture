@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { getScriptureNotesByBook } from "../services/scriptureNotesRepo";
 import { getStreamProgress, getRepeatedPassages } from "../services/progressRepo";
@@ -27,28 +27,71 @@ const STREAM_LABELS: Record<string, string> = {
 
 type Tab = "notes" | "tags" | "progress" | "export";
 
+const TABS: Tab[] = ["notes", "tags", "progress", "export"];
+const TAB_LABELS: Record<Tab, string> = {
+  notes: "Scripture Notes",
+  tags: "Tags",
+  progress: "Progress",
+  export: "Export",
+};
+
 export default function Library() {
   const [tab, setTab] = useState<Tab>("notes");
+  const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({
+    notes: null,
+    tags: null,
+    progress: null,
+    export: null,
+  });
+
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, currentTab: Tab) {
+    const currentIndex = TABS.indexOf(currentTab);
+    let nextIndex: number | null = null;
+    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % TABS.length;
+    if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + TABS.length) % TABS.length;
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = TABS.length - 1;
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    const nextTab = TABS[nextIndex];
+    setTab(nextTab);
+    tabRefs.current[nextTab]?.focus();
+  }
 
   return (
     <main>
       <h1 style={{ padding: "0 var(--space-3)", fontFamily: "var(--font-display)" }}>Library</h1>
 
-      <div className="library-tabs" role="tablist">
-        {(["notes", "tags", "progress", "export"] as Tab[]).map((t) => (
-          <button key={t} type="button" aria-pressed={tab === t} onClick={() => setTab(t)}>
-            {t === "notes" && "Scripture Notes"}
-            {t === "tags" && "Tags"}
-            {t === "progress" && "Progress"}
-            {t === "export" && "Export"}
+      <div className="library-tabs" role="tablist" aria-label="Library sections">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            ref={(element) => { tabRefs.current[t] = element; }}
+            id={`library-tab-${t}`}
+            type="button"
+            role="tab"
+            aria-selected={tab === t}
+            aria-controls={`library-panel-${t}`}
+            tabIndex={tab === t ? 0 : -1}
+            onClick={() => setTab(t)}
+            onKeyDown={(event) => handleTabKeyDown(event, t)}
+          >
+            {TAB_LABELS[t]}
           </button>
         ))}
       </div>
 
-      {tab === "notes" && <ScriptureNotesPanel />}
-      {tab === "tags" && <TagsPanel />}
-      {tab === "progress" && <ProgressPanel />}
-      {tab === "export" && <ExportPanel />}
+      <div
+        id={`library-panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`library-tab-${tab}`}
+      >
+        {tab === "notes" && <ScriptureNotesPanel />}
+        {tab === "tags" && <TagsPanel />}
+        {tab === "progress" && <ProgressPanel />}
+        {tab === "export" && <ExportPanel />}
+      </div>
     </main>
   );
 }
