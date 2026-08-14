@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { act, render, screen, waitFor, fireEvent } from "@testing-library/react";
 import Read from "../src/routes/Read";
-import db from "../src/services/database";
+import db, { getOrCreateEncounter } from "../src/services/database";
+import {
+  countEngagedEncounters,
+  savePassageNote,
+} from "../src/services/encounterActions";
+import { hasActivity } from "../src/services/readingYearRepo";
 
 beforeEach(async () => {
   await db.readingYears.clear();
@@ -27,6 +32,70 @@ describe("Read screen (smoke test)", () => {
     // Exactly one reading year should have been bootstrapped.
     const years = await db.readingYears.toArray();
     expect(years).toHaveLength(1);
+  });
+
+  it("does not create an encounter or activity for the default visible notebook", async () => {
+    render(<Read />);
+    await screen.findByText("Reading Desk");
+    await screen.findAllByRole("button", { name: "Mark complete" });
+
+    await waitFor(async () => expect(await db.readingYears.count()).toBe(1));
+    const year = (await db.readingYears.toArray())[0];
+    expect(await db.encounters.count()).toBe(0);
+    expect(await hasActivity(year.id)).toBe(false);
+    expect(await countEngagedEncounters(year.id, "gospel", [1])).toBe(0);
+  });
+
+  it("selecting another reading and opening its notebook remains passive", async () => {
+    render(<Read />);
+    await screen.findByText("Reading Desk");
+    const completeButtons = await screen.findAllByRole("button", { name: "Mark complete" });
+    expect(completeButtons.length).toBeGreaterThan(1);
+
+    fireEvent.click(completeButtons[1].closest(".reading-row")!);
+
+    await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
+    expect(await db.encounters.count()).toBe(0);
+  });
+
+  it("saving meaningful note content creates an encounter", async () => {
+    render(<Read />);
+    await screen.findByText("Reading Desk");
+    const textarea = await screen.findByRole("textbox");
+
+    fireEvent.change(textarea, { target: { value: "A meaningful note" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save note" }));
+
+    await waitFor(async () => expect(await db.encounters.count()).toBe(1));
+    expect(await db.passageNotes.count()).toBe(1);
+  });
+
+  it("opens and displays an existing encounter note without creating another encounter", async () => {
+    const firstRender = render(<Read />);
+    await screen.findByText("Reading Desk");
+    await waitFor(async () => expect(await db.readingYears.count()).toBe(1));
+    const year = (await db.readingYears.toArray())[0];
+    const firstButton = (await screen.findAllByRole("button", { name: "Mark complete" }))[0];
+    const row = firstButton.closest(".reading-row")!;
+    const streamLabel = row.querySelector(".reading-row__stream")!.textContent;
+    const streamByLabel = {
+      Psalms: "psalms",
+      Proverbs: "proverbs",
+      "Old Testament": "oldTestament",
+      Gospel: "gospel",
+      "New Testament": "newTestament",
+    } as const;
+    const stream = streamByLabel[streamLabel as keyof typeof streamByLabel];
+    await act(async () => {
+      const encounter = await getOrCreateEncounter(year.id, stream, 1);
+      await savePassageNote(encounter.id, "Existing **note**");
+    });
+
+    firstRender.unmount();
+    render(<Read />);
+
+    expect(await screen.findByText("note", { selector: "strong" })).toBeInTheDocument();
+    expect(await db.encounters.count()).toBe(1);
   });
 
   it("marking a reading complete updates the UI and persists to the database", async () => {

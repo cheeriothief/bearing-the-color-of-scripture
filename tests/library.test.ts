@@ -10,6 +10,11 @@ import { compareBookOrder, BIBLE_BOOK_ORDER } from "../src/domain/bibleBooks";
 import type { LocalDate } from "../src/services/clock";
 
 const sep1: LocalDate = { year: 2026, month: 9, day: 1 };
+const sep1NextYear: LocalDate = { year: 2027, month: 9, day: 1 };
+
+async function addReadingYear(id: string, startDate: LocalDate): Promise<void> {
+  await db.readingYears.add({ id, startDate, createdAt: new Date().toISOString() });
+}
 
 beforeEach(async () => {
   await db.readingYears.clear();
@@ -112,6 +117,7 @@ describe("exportService — JSON backup", () => {
 
 describe("exportService — Markdown ZIP", () => {
   it("produces a real ZIP with the expected folder structure", async () => {
+    await addReadingYear("year-1", sep1);
     await saveDailyReflection(sep1, "Daily thoughts with a #tag.");
     await saveMonthlyReflection(sep1, "Monthly summary.");
     const enc = await toggleCompletion("year-1", "oldTestament", 1); // Genesis 1-2
@@ -126,9 +132,59 @@ describe("exportService — Markdown ZIP", () => {
       paths.some((p) => p.startsWith("Bearing the Color of Scripture/Monthly Reflections/"))
     ).toBe(true);
     expect(
-      paths.some((p) => p.startsWith("Bearing the Color of Scripture/Passage Notes/Genesis/"))
+      paths.some((p) =>
+        p.startsWith(
+          "Bearing the Color of Scripture/Passage Notes/Reading Years/2026-09-01--year-1/Genesis/"
+        )
+      )
     ).toBe(true);
     expect(paths).toContain("Bearing the Color of Scripture/Metadata/progress.md");
+  });
+
+  it("exports identical assignments from different reading years without collisions", async () => {
+    await addReadingYear("year-1", sep1);
+    await addReadingYear("year-2", sep1NextYear);
+    const firstEncounter = await toggleCompletion("year-1", "oldTestament", 1);
+    const secondEncounter = await toggleCompletion("year-2", "oldTestament", 1);
+    await savePassageNote(firstEncounter.id, "First reading year's Genesis note.");
+    await savePassageNote(secondEncounter.id, "Second reading year's Genesis note.");
+
+    const files = unzipSync(await buildMarkdownExportZip());
+    const passagePaths = Object.keys(files).filter((path) =>
+      path.startsWith("Bearing the Color of Scripture/Passage Notes/")
+    );
+
+    expect(passagePaths).toHaveLength(2);
+    expect(new Set(passagePaths).size).toBe(2);
+    const firstPath = passagePaths.find((path) => path.includes("2026-09-01--year-1"));
+    const secondPath = passagePaths.find((path) => path.includes("2027-09-01--year-2"));
+    expect(firstPath).toBeDefined();
+    expect(secondPath).toBeDefined();
+
+    const firstContent = strFromU8(files[firstPath!]);
+    const secondContent = strFromU8(files[secondPath!]);
+    expect(firstContent).toContain("First reading year's Genesis note.");
+    expect(firstContent).toContain('readingYearId: "year-1"');
+    expect(firstContent).toContain('readingYearStartDate: "2026-09-01"');
+    expect(secondContent).toContain("Second reading year's Genesis note.");
+    expect(secondContent).toContain('readingYearId: "year-2"');
+    expect(secondContent).toContain('readingYearStartDate: "2027-09-01"');
+  });
+
+  it("keeps non-passage-note export paths unchanged", async () => {
+    await saveDailyReflection(sep1, "Daily thoughts.");
+    await saveMonthlyReflection(sep1, "Monthly thoughts.");
+
+    const files = unzipSync(await buildMarkdownExportZip());
+    expect(Object.keys(files)).toContain(
+      "Bearing the Color of Scripture/Journal/2026-09-01.md"
+    );
+    expect(Object.keys(files)).toContain(
+      "Bearing the Color of Scripture/Monthly Reflections/2026-09.md"
+    );
+    expect(Object.keys(files)).toContain(
+      "Bearing the Color of Scripture/Metadata/progress.md"
+    );
   });
 
   it("includes tag frontmatter derived from the note's own content", async () => {
