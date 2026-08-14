@@ -61,6 +61,28 @@ export async function savePassageNote(encounterId: string, markdown: string): Pr
 }
 
 /**
+ * Save note content for a reading without creating an encounter merely to
+ * look the note up. A new encounter is created only when there is meaningful
+ * (non-whitespace) content to persist; existing encounters can still have
+ * their notes updated or cleared.
+ */
+export async function savePassageNoteForReading(
+  readingYearId: string,
+  stream: StreamKey,
+  ordinal: number,
+  markdown: string
+): Promise<EncounterRecord | undefined> {
+  let encounter = await findEncounter(readingYearId, stream, ordinal);
+  if (!encounter) {
+    if (!markdown.trim()) return undefined;
+    encounter = await getOrCreateEncounter(readingYearId, stream, ordinal);
+  }
+
+  await savePassageNote(encounter.id, markdown);
+  return encounter;
+}
+
+/**
  * How many of the given prior ordinals (same passage, earlier occasions —
  * see findPriorOrdinalsWithSameReference) the user actually has an
  * encounter row for. This is what "N previous encounters" should count:

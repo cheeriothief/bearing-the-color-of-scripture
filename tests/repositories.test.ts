@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import db from "../src/services/database";
-import { toggleCompletion, findEncounter, savePassageNote, getPassageNote } from "../src/services/encounterActions";
+import {
+  toggleCompletion,
+  findEncounter,
+  savePassageNote,
+  savePassageNoteForReading,
+  getPassageNote,
+} from "../src/services/encounterActions";
 import { getOrCreateActiveReadingYear } from "../src/services/readingYearRepo";
 import { FixedClock } from "../src/services/clock";
 import {
@@ -56,6 +62,27 @@ describe("encounterActions — lazy creation", () => {
 });
 
 describe("encounterActions — passage notes", () => {
+  it("does not create an encounter for an empty or whitespace-only note", async () => {
+    expect(
+      await savePassageNoteForReading("year-1", "psalms", 1, "  \n")
+    ).toBeUndefined();
+    expect(await db.encounters.count()).toBe(0);
+    expect(await db.passageNotes.count()).toBe(0);
+  });
+
+  it("creates an encounter when meaningful note content is saved", async () => {
+    const encounter = await savePassageNoteForReading(
+      "year-1",
+      "psalms",
+      1,
+      "Meaningful content"
+    );
+
+    expect(encounter).toBeDefined();
+    expect(await db.encounters.count()).toBe(1);
+    expect(await getPassageNote(encounter!.id)).toBe("Meaningful content");
+  });
+
   it("a note is tied to one specific encounter, not the passage in general", async () => {
     const enc1 = await toggleCompletion("year-1", "gospel", 5); // Matthew 5, pass 1
     const enc2 = await toggleCompletion("year-1", "gospel", 200); // Matthew 5 again, later pass — different ordinal
