@@ -43,7 +43,7 @@ export default function Settings() {
 
   useEffect(() => {
     if (readingYear) setDateDraft(localDateToISO(readingYear.startDate));
-  }, [readingYear?.id, readingYear?.startDate.year, readingYear?.startDate.month, readingYear?.startDate.day]);
+  }, [readingYear]);
 
   async function handleSaveStartDate() {
     if (!readingYear) return;

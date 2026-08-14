@@ -28,6 +28,10 @@ describe("Read screen (smoke test)", () => {
       const completeButtons = await screen.findAllByRole("button", { name: "Mark complete" });
       expect(completeButtons.length).toBeGreaterThan(0);
     });
+    // The default notebook performs a second asynchronous load after the rows
+    // appear. Await it so the test does not finish while React is still
+    // applying that state update.
+    expect(await screen.findByRole("textbox")).toBeEnabled();
 
     // Exactly one reading year should have been bootstrapped.
     const years = await db.readingYears.toArray();
@@ -96,6 +100,39 @@ describe("Read screen (smoke test)", () => {
 
     expect(await screen.findByText("note", { selector: "strong" })).toBeInTheDocument();
     expect(await db.encounters.count()).toBe(1);
+  });
+
+  it("opens an existing note for editing with mouse and keyboard activation", async () => {
+    const firstRender = render(<Read />);
+    await screen.findByText("Reading Desk");
+    await screen.findByRole("textbox");
+    const year = (await db.readingYears.toArray())[0];
+    const firstButton = (await screen.findAllByRole("button", { name: "Mark complete" }))[0];
+    const row = firstButton.closest(".reading-row")!;
+    const streamLabel = row.querySelector(".reading-row__stream")!.textContent;
+    const streamByLabel = {
+      Psalms: "psalms",
+      Proverbs: "proverbs",
+      "Old Testament": "oldTestament",
+      Gospel: "gospel",
+      "New Testament": "newTestament",
+    } as const;
+    const stream = streamByLabel[streamLabel as keyof typeof streamByLabel];
+    await act(async () => {
+      const encounter = await getOrCreateEncounter(year.id, stream, 1);
+      await savePassageNote(encounter.id, "Existing note");
+    });
+    firstRender.unmount();
+
+    render(<Read />);
+    const noteControl = await screen.findByRole("button", { name: /Edit note for/ });
+    fireEvent.keyDown(noteControl, { key: "Enter" });
+    expect(await screen.findByRole("textbox")).toHaveValue("Existing note");
+
+    fireEvent.blur(screen.getByRole("textbox"));
+    const reopenedControl = await screen.findByRole("button", { name: /Edit note for/ });
+    fireEvent.click(reopenedControl);
+    expect(await screen.findByRole("textbox")).toHaveValue("Existing note");
   });
 
   it("marking a reading complete updates the UI and persists to the database", async () => {

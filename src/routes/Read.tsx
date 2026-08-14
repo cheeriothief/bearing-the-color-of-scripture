@@ -52,13 +52,15 @@ export default function Read() {
 
   const assignment = useLiveQuery(() => getStreamSessionAssignment(), []);
 
-  const today = clock.today();
+  // Keep the date for this mounted desk stable. A new mount (including the
+  // normal day/navigation refresh) gets a fresh date, while unrelated live
+  // query updates do not manufacture a new dependency object.
+  const today = useMemo(() => clock.today(), []);
 
   const resolved: ResolvedReading[] = useMemo(() => {
     if (!readingYear || !shiftEvents) return [];
     return resolveAllStreamsForDate(today, readingYear, shiftEvents);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readingYear, shiftEvents, today.year, today.month, today.day]);
+  }, [readingYear, shiftEvents, today]);
 
   if (!readingYear || !assignment) {
     return (
@@ -162,7 +164,7 @@ function ReadingRow({
 
   const priorOrdinals = useMemo(
     () => findPriorOrdinalsWithSameReference(stream, ordinal, reference),
-    [stream, ordinal, reference.book, reference.startChapter, reference.endChapter]
+    [stream, ordinal, reference]
   );
   const priorCount = useLiveQuery(
     () => countEngagedEncounters(readingYearId, stream, priorOrdinals),
@@ -314,7 +316,19 @@ function Notebook({
       </div>
 
       {loaded && !editingNote ? (
-        <div onClick={() => setEditingNote(true)} className="reflection-view" role="button" tabIndex={0}>
+        <div
+          onClick={() => setEditingNote(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setEditingNote(true);
+            }
+          }}
+          className="reflection-view"
+          role="button"
+          tabIndex={0}
+          aria-label={`Edit note for ${reference.display}`}
+        >
           <MarkdownView markdown={noteDraft} />
         </div>
       ) : (
