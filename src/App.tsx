@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Route, Routes } from "react-router-dom";
+import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import Home from "./routes/Home";
 import Read from "./routes/Read";
@@ -31,6 +31,7 @@ const NAV_ITEMS = [
 ] as const;
 
 export default function App() {
+  const location = useLocation();
   const theme = useLiveQuery(() => getTheme(), []);
   const [thresholdVisible, setThresholdVisible] = useState<boolean | null>(null);
 
@@ -57,11 +58,13 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <header className="app-header">
-        <NavLink to="/settings" aria-label="Settings" className="settings-link">
-          <GearIcon />
-        </NavLink>
-      </header>
+      {location.pathname !== "/read" && (
+        <header className="app-header">
+          <NavLink to="/settings" aria-label="Settings" className="settings-link">
+            <GearIcon />
+          </NavLink>
+        </header>
+      )}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/read" element={<Read />} />

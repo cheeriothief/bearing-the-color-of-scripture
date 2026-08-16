@@ -64,4 +64,31 @@ describe("App — Threshold gate", () => {
     });
     expect(screen.queryByRole("button", { name: "Enter" })).not.toBeInTheDocument();
   });
+
+  it("removes the application header chrome from the Reading Desk only", async () => {
+    const today = new Date();
+    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(
+      today.getDate()
+    ).padStart(2, "0")}`;
+    await db.appState.put({ key: "lastThresholdShownDate", value: iso });
+
+    const view = render(
+      <MemoryRouter initialEntries={["/read"]}>
+        <App />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole("heading", { name: "Reading Desk" })).toBeInTheDocument();
+    expect(screen.queryByRole("banner")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Settings" })).not.toBeInTheDocument();
+
+    view.unmount();
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>
+    );
+    expect(await screen.findByRole("banner")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
+  });
 });

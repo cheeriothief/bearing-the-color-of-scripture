@@ -50,6 +50,28 @@ describe("Read screen (smoke test)", () => {
     expect(await countEngagedEncounters(year.id, "gospel", [1])).toBe(0);
   });
 
+  it("opens the empty paper for writing by pointer and focuses the named editor", async () => {
+    render(<Read />);
+    const emptyPaper = await screen.findByRole("button", { name: /Write a note for/ });
+
+    fireEvent.click(emptyPaper);
+
+    const textarea = screen.getByRole("textbox", { name: /Note for/ });
+    expect(textarea).toHaveFocus();
+    expect(await db.encounters.count()).toBe(0);
+  });
+
+  it.each(["Enter", " "])("opens the empty paper for writing with the %p key", async (key) => {
+    render(<Read />);
+    const emptyPaper = await screen.findByRole("button", { name: /Write a note for/ });
+    emptyPaper.focus();
+
+    fireEvent.keyDown(emptyPaper, { key });
+
+    expect(screen.getByRole("textbox", { name: /Note for/ })).toHaveFocus();
+    expect(await db.encounters.count()).toBe(0);
+  });
+
   it("selects another reading by pointer without toggling completion or creating activity", async () => {
     render(<Read />);
     await screen.findByText("Reading Desk");

@@ -317,6 +317,10 @@ function Notebook({
     setEditingNote(false);
   }
 
+  function beginEditingNote() {
+    setEditingNote(true);
+  }
+
   async function handleShift() {
     await shiftStream(readingYearId, stream, ordinal, 1);
   }
@@ -371,15 +375,26 @@ function Notebook({
           <MarkdownView markdown={noteDraft} />
         </div>
       ) : (
-        <div className="notebook-empty">
+        <button
+          type="button"
+          className="notebook-empty notebook-empty--writable"
+          aria-label={`Write a note for ${reference.display}`}
+          onClick={beginEditingNote}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              beginEditingNote();
+            }
+          }}
+        >
           <p><strong>No note yet.</strong></p>
           <p>Write any thoughts that come.</p>
-        </div>
+        </button>
       )}
 
       <div className="notebook-actions" aria-label="Reading actions">
         {!editingNote && (
-          <button type="button" onClick={() => setEditingNote(true)}>
+          <button type="button" onClick={beginEditingNote}>
             {noteDraft.trim() ? "Edit note" : "Write a note"}
           </button>
         )}
