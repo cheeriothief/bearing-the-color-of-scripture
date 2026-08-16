@@ -47,14 +47,20 @@ export default function Home() {
 
   return (
     <main className="home">
-      <div className="home__title">Bearing the Color of Scripture</div>
-      <div className="home__message">{message ?? ""}</div>
-      <div className="home__destinations">
-        <Link to="/read" className="home__destination">Read</Link>
-        <Link to="/journal" className="home__destination">Journal</Link>
-        <Link to="/prayer" className="home__destination">Prayer</Link>
-        <Link to="/library" className="home__destination">Library</Link>
-      </div>
+      <section className="home__cover" aria-labelledby="home-title" data-testid="prayer-book-cover">
+        <div className="home__frame" aria-hidden="true" />
+        <div className="home__emblem" aria-hidden="true"><span /></div>
+        <h1 className="home__title" id="home-title">Bearing the Color <span>of Scripture</span></h1>
+        <p className="home__message" aria-live="polite">{message ?? ""}</p>
+        <div className="home__divider" aria-hidden="true"><span /></div>
+        <nav className="home__destinations" aria-label="Home destinations">
+          <Link to="/read" className="home__destination">Read</Link>
+          <Link to="/journal" className="home__destination">Journal</Link>
+          <Link to="/prayer" className="home__destination">Prayer</Link>
+          <Link to="/library" className="home__destination">Library</Link>
+          <Link to="/settings" className="home__destination">Settings</Link>
+        </nav>
+      </section>
     </main>
   );
 }

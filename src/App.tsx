@@ -57,7 +57,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${location.pathname === "/" ? " app-shell--home" : ""}`}>
       {location.pathname !== "/read" && (
         <header className="app-header">
           <NavLink to="/settings" aria-label="Settings" className="settings-link">
