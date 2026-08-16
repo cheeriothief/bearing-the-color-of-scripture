@@ -41,6 +41,11 @@
 .notebook-note { font-size: 17px; line-height: 1.75; max-width: 68ch; }
 .notebook-empty { display: grid; align-content: center; justify-items: center; text-align: center; color: var(--color-text-muted); }
 .notebook-empty p { margin: 2px; }
+.notebook-empty--writable { width: 100%; padding: var(--space-4); border: 0; border-radius: var(--radius-sm); background: transparent; font: inherit; cursor: text; }
+.notebook-empty--writable:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+@media (hover: hover) {
+  .notebook-empty--writable:hover { background: color-mix(in srgb, var(--color-accent) 4%, transparent); }
+}
 .notebook-textarea { width: 100%; min-height: 220px; resize: vertical; font-family: var(--font-body); font-size: 16px; line-height: 1.7; background: color-mix(in srgb, var(--color-bg) 94%, var(--color-accent)); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); }
 .notebook-editor__actions, .notebook-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .notebook-editor__actions { margin-top: var(--space-2); }
