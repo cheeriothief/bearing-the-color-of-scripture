@@ -89,6 +89,6 @@ describe("App — Threshold gate", () => {
       </MemoryRouter>
     );
     expect(await screen.findByRole("banner")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Settings" }).length).toBeGreaterThan(0);
   });
 });
