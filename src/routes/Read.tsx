@@ -3,7 +3,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import type { ReadingYear, ResolvedReading, StreamKey } from "../domain/types";
 import { resolveAllStreamsForDate } from "../domain/scheduleResolver";
 import { findPriorOrdinalsWithSameReference } from "../domain/datasetAdapter";
-import { SystemClock } from "../services/clock";
+import { jsDateFromLocalDate, SystemClock, type LocalDate } from "../services/clock";
 import { getOrCreateActiveReadingYear, readingYearLabel } from "../services/readingYearRepo";
 import { listShiftEvents, shiftStream } from "../services/shiftEventRepo";
 import {
@@ -132,6 +132,7 @@ export default function Read() {
               resolved={effectiveSelected}
               onBack={() => setSelectedStream(null)}
               session={session}
+              readingDate={today}
               onReassignSession={(s) => setStreamSession(effectiveSelected.stream, s)}
             />
           ) : (
@@ -200,13 +201,13 @@ function ReadingRow({
   return (
     <div
       className="reading-row"
+      data-selected={selected}
       onClick={onSelect}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
         cursor: "pointer",
-        outline: selected ? "1px solid var(--color-accent)" : "none",
         // Subtle background tint tracks the swipe so there's still feedback
         // mid-gesture, but nothing about the text itself moves or slides.
         backgroundColor: `color-mix(in srgb, var(--color-accent) ${Math.min(
@@ -234,17 +235,17 @@ function ReadingRow({
           </span>
         )}
       </button>
-      <div className="reading-row__actions">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleToggleComplete();
-          }}
-        >
-          {completed ? "Mark incomplete" : "Mark complete"}
-        </button>
-      </div>
+      <button
+        type="button"
+        className="reading-row__completion"
+        onClick={(event) => {
+          event.stopPropagation();
+          handleToggleComplete();
+        }}
+        aria-label={`${completed ? "Mark incomplete" : "Mark complete"}: ${reference.display}`}
+      >
+        {completed ? "Completed" : "Mark complete"}
+      </button>
     </div>
   );
 }
@@ -254,12 +255,14 @@ function Notebook({
   resolved,
   onBack,
   session,
+  readingDate,
   onReassignSession,
 }: {
   readingYearId: string;
   resolved: ResolvedReading;
   onBack: () => void;
   session: Session;
+  readingDate: LocalDate;
   onReassignSession: (session: Session) => void;
 }) {
   const { stream, ordinal, reference } = resolved;
@@ -286,7 +289,7 @@ function Notebook({
       storedNote.ordinal !== ordinal
     ) return;
     setNoteDraft(storedNote.markdown);
-    setEditingNote(!storedNote.markdown.trim()); // start in edit mode only if there's nothing written yet
+    setEditingNote(false);
     setLoaded(true);
   }, [storedNote, readingYearId, stream, ordinal]);
 
@@ -309,54 +312,79 @@ function Notebook({
     return save;
   }
 
+  function handleCancel() {
+    setNoteDraft(storedNote?.markdown ?? "");
+    setEditingNote(false);
+  }
+
   async function handleShift() {
     await shiftStream(readingYearId, stream, ordinal, 1);
   }
 
   const otherSession: Session = session === "morning" ? "evening" : "morning";
+  const encounter = useLiveQuery(
+    () => findEncounter(readingYearId, stream, ordinal),
+    [readingYearId, stream, ordinal]
+  );
+  const priorOrdinals = useMemo(
+    () => findPriorOrdinalsWithSameReference(stream, ordinal, reference),
+    [stream, ordinal, reference]
+  );
+  const priorCount = useLiveQuery(
+    () => countEngagedEncounters(readingYearId, stream, priorOrdinals),
+    [readingYearId, stream, priorOrdinals.join(",")]
+  );
+  const dateLabel = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(
+    jsDateFromLocalDate(readingDate)
+  );
 
   return (
-    <div>
+    <article className="notebook">
       <button type="button" className="notebook-back" onClick={onBack}>
         ← Back to readings
       </button>
-      <div className="notebook-heading">{reference.display}</div>
+      <h2 className="notebook-heading">{reference.display}</h2>
       <div className="notebook-sub">
-        {STREAM_LABELS[stream]} · ordinal {ordinal}
+        {dateLabel} · {session === "morning" ? "Morning" : "Evening"}
+        {!!priorCount && ` · ${priorCount} previous encounter${priorCount === 1 ? "" : "s"}`}
       </div>
 
-      {loaded && !editingNote ? (
-        <div
-          onClick={() => setEditingNote(true)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              setEditingNote(true);
-            }
-          }}
-          className="reflection-view"
-          role="button"
-          tabIndex={0}
-          aria-label={`Edit note for ${reference.display}`}
-        >
+      {!loaded ? (
+        <p className="notebook-empty">Loading note…</p>
+      ) : editingNote ? (
+        <div className="notebook-editor">
+          <textarea
+            className="notebook-textarea"
+            aria-label={`Note for ${reference.display}`}
+            value={loaded ? noteDraft : ""}
+            onChange={(e) => setNoteDraft(e.target.value)}
+            placeholder="Write freely — Markdown supported."
+            autoFocus={editingNote}
+          />
+          <div className="notebook-editor__actions">
+            <button type="button" onClick={handleSave}>Save note</button>
+            <button type="button" onClick={handleCancel}>Cancel</button>
+          </div>
+        </div>
+      ) : noteDraft.trim() ? (
+        <div className="notebook-note">
           <MarkdownView markdown={noteDraft} />
         </div>
       ) : (
-        <textarea
-          className="notebook-textarea"
-          aria-label={`Note for ${reference.display}`}
-          value={loaded ? noteDraft : ""}
-          onChange={(e) => setNoteDraft(e.target.value)}
-          onBlur={handleSave}
-          placeholder="Write freely — Markdown supported."
-          disabled={!loaded}
-          autoFocus={editingNote}
-        />
+        <div className="notebook-empty">
+          <p><strong>No note yet.</strong></p>
+          <p>Write any thoughts that come.</p>
+        </div>
       )}
 
-      <div className="reading-row__actions" style={{ marginTop: "var(--space-3)" }}>
-        <button type="button" onClick={handleSave}>
-          Save note
+      <div className="notebook-actions" aria-label="Reading actions">
+        {!editingNote && (
+          <button type="button" onClick={() => setEditingNote(true)}>
+            {noteDraft.trim() ? "Edit note" : "Write a note"}
+          </button>
+        )}
+        <button type="button" onClick={() => toggleCompletion(readingYearId, stream, ordinal)}>
+          {encounter?.completedAt ? "Mark incomplete" : "Mark complete"}
         </button>
         <button type="button" onClick={handleShift}>
           Shift to tomorrow
@@ -365,6 +393,6 @@ function Notebook({
           Move to {otherSession}
         </button>
       </div>
-    </div>
+    </article>
   );
 }
