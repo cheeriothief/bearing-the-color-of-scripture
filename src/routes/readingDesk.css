@@ -1,175 +1,66 @@
-/* Reading Desk layout — mobile-first single column, tablet two-pane. */
-
+/* Reading Desk layout — phone behavior remains single-pane; the crafted desk begins at tablet. */
 .reading-desk {
-  /* Full-bleed dark surface from the very top of the screen, matching the
-     mockup: the title and session controls sit ON the book cover, not on a
-     separate light header above it. Only the notebook pane (the "open
-     page") ever shows the cream surface -- everything else in this screen
-     is part of the dark cover. */
   min-height: 100vh;
   background: var(--color-bg-inset);
   color: var(--color-text-inset);
 }
 
-.reading-desk__session {
-  display: flex;
-  gap: var(--space-2);
-  padding: var(--space-3);
+.reading-desk > h1 { margin: 0; padding-top: var(--space-3) !important; }
+.reading-desk > p { margin: var(--space-1) 0 0; }
+.reading-desk__session { display: flex; gap: var(--space-2); padding: var(--space-3); }
+.reading-desk__session button,
+.notebook-actions button,
+.notebook-editor__actions button {
+  font-family: var(--font-ui); font-size: 12px; letter-spacing: .04em;
+  padding: 6px 12px; border: 1px solid currentColor; border-radius: var(--radius-sm);
+  background: transparent; color: inherit;
 }
-.reading-desk__session button {
-  font-family: var(--font-ui);
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border-inset);
-  background: transparent;
-  color: var(--color-text-muted-inset);
-}
-.reading-desk__session button[aria-pressed="true"] {
-  background: var(--color-accent);
-  color: var(--color-bg-inset);
-  border-color: var(--color-accent);
-}
+.reading-desk__session button { text-transform: uppercase; color: var(--color-text-muted-inset); border-color: var(--color-border-inset); }
+.reading-desk__session button[aria-pressed="true"] { background: var(--color-accent); color: var(--color-bg-inset); border-color: var(--color-accent); }
+.reading-desk__panes { display: flex; flex-direction: column; }
+.reading-desk__list { background: var(--color-bg-inset); color: var(--color-text-inset); padding: var(--space-3); }
+.reading-desk__list[data-hidden="true"], .reading-desk__notebook[data-hidden="true"] { display: none; }
+.reading-desk__notebook { background: var(--color-bg); color: var(--color-text); padding: var(--space-4); }
 
-.reading-desk__panes {
-  display: flex;
-  flex-direction: column;
-}
+.reading-row { position: relative; min-height: 54px; padding: 9px 74px 8px 10px; border-bottom: 1px solid var(--color-border-inset); touch-action: pan-y; transition: background-color .1s linear, opacity .15s ease; }
+.reading-row[data-selected="true"] { box-shadow: inset 3px 0 var(--color-accent); background-color: color-mix(in srgb, var(--color-accent) 8%, transparent) !important; }
+.reading-row:has(.reading-row__ref[data-completed="true"]) { opacity: .58; }
+.reading-row__selection { display: block; width: 100%; padding: 0; border: 0; text-align: left; color: inherit; background: transparent; }
+.reading-row__selection:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+.reading-row__stream { display: block; margin-bottom: 2px; font-family: var(--font-ui); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--color-text-muted-inset); }
+.reading-row__ref { font-family: var(--font-body); font-size: 17px; line-height: 1.15; }
+.reading-row__ref[data-completed="true"] { text-decoration: line-through; color: var(--color-completed); }
+.reading-row__badge { display: block; margin-top: 2px; font-family: var(--font-ui); font-size: 10px; color: var(--color-text-muted-inset); }
+.reading-row__completion { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); padding: 3px 5px; border: 0; background: transparent; color: var(--color-text-muted-inset); font: 10px var(--font-ui); }
+.reading-row__completion:active:not(:disabled) { transform: translateY(-50%) scale(.97); }
 
-.reading-desk__list {
-  background: var(--color-bg-inset);
-  color: var(--color-text-inset);
-  padding: var(--space-3);
-}
-.reading-desk__list[data-hidden="true"] {
-  display: none;
-
-}
-
-.reading-desk__notebook {
-  background: var(--color-bg);
-  color: var(--color-text);
-  padding: var(--space-4);
-}
-.reading-desk__notebook[data-hidden="true"] {
-  display: none;
-}
-
-.reading-row {
-  position: relative;
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--color-border-inset);
-  touch-action: pan-y;
-  transition: background-color 0.1s linear;
-}
-.reading-row__selection {
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  text-align: left;
-  color: inherit;
-  background: transparent;
-}
-.reading-row__selection:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 4px;
-}
-.reading-row__stream {
-  font-family: var(--font-ui);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--color-text-muted-inset);
-  display: block;
-  margin-bottom: 3px;
-}
-.reading-row__ref {
-  font-family: var(--font-body);
-  font-size: 17px;
-}
-.reading-row__ref[data-completed="true"] {
-  text-decoration: line-through;
-  color: var(--color-completed);
-}
-.reading-row__badge {
-  margin-left: var(--space-2);
-  font-family: var(--font-ui);
-  font-size: 10px;
-  font-style: italic;
-  color: var(--color-text-muted-inset);
-}
-
-.reading-row__actions {
-  margin-top: var(--space-2);
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-.reading-row__actions button {
-  font-family: var(--font-ui);
-  font-size: 11px;
-  padding: 5px 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-accent);
-  color: var(--color-accent);
-  background: transparent;
-}
-
-.notebook-heading {
-  font-family: var(--font-display);
-  font-size: 22px;
-  margin-bottom: 4px;
-}
-.notebook-sub {
-  font-family: var(--font-ui);
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-3);
-}
-.notebook-textarea {
-  width: 100%;
-  min-height: 160px;
-  font-family: var(--font-body);
-  font-size: 15px;
-  line-height: 1.7;
-  background: transparent;
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2);
-}
-.notebook-back {
-  font-family: var(--font-ui);
-  font-size: 13px;
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-3);
-  display: inline-block;
-}
+.notebook { min-height: 100%; display: flex; flex-direction: column; }
+.notebook-heading { font-family: var(--font-display); font-size: clamp(28px, 4vw, 38px); font-weight: 500; line-height: 1.05; margin: 0 0 6px; }
+.notebook-sub { font-family: var(--font-ui); font-size: 12px; color: var(--color-text-muted); margin-bottom: var(--space-4); }
+.notebook-note, .notebook-empty, .notebook-editor { flex: 1; min-height: 180px; }
+.notebook-note { font-size: 17px; line-height: 1.75; max-width: 68ch; }
+.notebook-empty { display: grid; align-content: center; justify-items: center; text-align: center; color: var(--color-text-muted); }
+.notebook-empty p { margin: 2px; }
+.notebook-textarea { width: 100%; min-height: 220px; resize: vertical; font-family: var(--font-body); font-size: 16px; line-height: 1.7; background: color-mix(in srgb, var(--color-bg) 94%, var(--color-accent)); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); }
+.notebook-editor__actions, .notebook-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.notebook-editor__actions { margin-top: var(--space-2); }
+.notebook-actions { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); color: var(--color-text-muted); }
+.notebook-actions button, .notebook-editor__actions button { border-color: var(--color-border); }
+.notebook-actions button:first-child, .notebook-editor__actions button:first-child { color: var(--color-accent); border-color: var(--color-accent); }
+.notebook-back { font-family: var(--font-ui); font-size: 13px; color: var(--color-text-muted); margin-bottom: var(--space-3); display: inline-block; align-self: flex-start; }
 
 @media (min-width: 768px) {
-  .reading-desk__panes {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-  .reading-desk__list {
-    width: 34%;
-    flex-shrink: 0;
-    min-height: 60vh;
-  }
-  .reading-desk__list[data-hidden="true"] {
-    display: block; /* always visible on tablet regardless of selection */
-  }
-  .reading-desk__notebook {
-    width: 66%;
-    min-height: 60vh;
-  }
-  .reading-desk__notebook[data-hidden="true"] {
-    display: block; /* always visible on tablet */
-  }
-  .notebook-back {
-    display: none; /* no "back" concept when both panes are always visible */
-  }
+  .reading-desk { min-height: calc(100vh - 60px); padding: clamp(20px, 4vh, 48px) clamp(24px, 5vw, 72px); }
+  .reading-desk > h1, .reading-desk > p, .reading-desk__session { width: min(1200px, 100%); margin-left: auto; margin-right: auto; }
+  .reading-desk > h1 { padding: 0 !important; }
+  .reading-desk > p { padding: 0 !important; }
+  .reading-desk__session { padding: var(--space-3) 0 var(--space-4); }
+  .reading-desk__panes { flex-direction: row; width: min(1200px, 100%); height: clamp(520px, 68vh, 760px); margin: 0 auto; overflow: hidden; border-radius: var(--radius-md); box-shadow: 0 18px 50px rgb(0 0 0 / .28); }
+  .reading-desk__list { width: 33.333%; flex: none; padding: var(--space-4) var(--space-3); overflow-y: auto; }
+  .reading-desk__list[data-hidden="true"], .reading-desk__notebook[data-hidden="true"] { display: block; }
+  .reading-desk__notebook { width: 66.667%; padding: clamp(32px, 5vw, 64px); overflow-y: auto; border-left: 2px solid color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); box-shadow: inset 10px 0 20px rgb(0 0 0 / .04); }
+  .notebook-back { display: none; }
 }
+
+[data-theme="candlelight"] .reading-desk__panes { box-shadow: 0 18px 55px rgb(0 0 0 / .45), 0 0 45px color-mix(in srgb, var(--color-accent) 8%, transparent); }
+[data-theme="minimal"] .reading-desk__panes { box-shadow: 0 12px 30px rgb(0 0 0 / .1); border: 1px solid var(--color-border-inset); }

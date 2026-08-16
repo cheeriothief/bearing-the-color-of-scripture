@@ -25,13 +25,13 @@ describe("Read screen (smoke test)", () => {
     // At least one stream row should render once data loads, regardless of
     // which session (Morning/Evening) the current time of day defaults to.
     await waitFor(async () => {
-      const completeButtons = await screen.findAllByRole("button", { name: "Mark complete" });
+      const completeButtons = await screen.findAllByRole("button", { name: /^Mark complete:/ });
       expect(completeButtons.length).toBeGreaterThan(0);
     });
     // The default notebook performs a second asynchronous load after the rows
     // appear. Await it so the test does not finish while React is still
     // applying that state update.
-    expect(await screen.findByRole("textbox")).toBeEnabled();
+    expect(await screen.findByText("No note yet.")).toBeInTheDocument();
 
     // Exactly one reading year should have been bootstrapped.
     const years = await db.readingYears.toArray();
@@ -41,7 +41,7 @@ describe("Read screen (smoke test)", () => {
   it("does not create an encounter or activity for the default visible notebook", async () => {
     render(<Read />);
     await screen.findByText("Reading Desk");
-    await screen.findAllByRole("button", { name: "Mark complete" });
+    await screen.findAllByRole("button", { name: /^Mark complete:/ });
 
     await waitFor(async () => expect(await db.readingYears.count()).toBe(1));
     const year = (await db.readingYears.toArray())[0];
@@ -53,16 +53,16 @@ describe("Read screen (smoke test)", () => {
   it("selects another reading by pointer without toggling completion or creating activity", async () => {
     render(<Read />);
     await screen.findByText("Reading Desk");
-    const completeButtons = await screen.findAllByRole("button", { name: "Mark complete" });
+    const completeButtons = await screen.findAllByRole("button", { name: /^Mark complete:/ });
     expect(completeButtons.length).toBeGreaterThan(1);
 
     const secondRow = completeButtons[1].closest(".reading-row")!;
     const selection = secondRow.querySelector<HTMLButtonElement>(".reading-row__selection")!;
     fireEvent.click(selection);
 
-    await waitFor(() => expect(screen.getByRole("textbox", { name: /Note for/ })).toBeEnabled());
+    await waitFor(() => expect(screen.getByText("No note yet.")).toBeInTheDocument());
     expect(await db.encounters.count()).toBe(0);
-    expect(completeButtons[1]).toHaveAccessibleName("Mark complete");
+    expect(completeButtons[1]).toHaveAccessibleName(/^Mark complete:/);
   });
 
   it("selects different readings with native keyboard activation without toggling completion", async () => {
@@ -76,10 +76,10 @@ describe("Read screen (smoke test)", () => {
 
     const reference = selectionButtons[1].querySelector(".reading-row__ref")!.textContent!;
     await waitFor(() => {
-      expect(screen.getByRole("textbox", { name: `Note for ${reference}` })).toBeEnabled();
+      expect(screen.getByRole("heading", { name: reference })).toBeInTheDocument();
     });
     expect(await db.encounters.count()).toBe(0);
-    expect(screen.getAllByRole("button", { name: "Mark complete" })).toHaveLength(
+    expect(screen.getAllByRole("button", { name: /^Mark complete:/ })).toHaveLength(
       selectionButtons.length
     );
   });
@@ -87,14 +87,45 @@ describe("Read screen (smoke test)", () => {
   it("saving meaningful note content creates an encounter", async () => {
     render(<Read />);
     await screen.findByText("Reading Desk");
+    await screen.findByText("No note yet.");
+    fireEvent.click(screen.getByRole("button", { name: "Write a note" }));
     const textarea = await screen.findByRole("textbox", { name: /Note for/ });
-    await waitFor(() => expect(textarea).toBeEnabled());
 
     fireEvent.change(textarea, { target: { value: "A meaningful note" } });
     fireEvent.click(screen.getByRole("button", { name: "Save note" }));
 
     await waitFor(async () => expect(await db.encounters.count()).toBe(1));
     expect(await db.passageNotes.count()).toBe(1);
+    expect(await screen.findByText("A meaningful note")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /Note for/ })).not.toBeInTheDocument();
+  });
+
+  it("keeps the empty state persistence-free and cancel discards a draft", async () => {
+    render(<Read />);
+    expect(await screen.findByText("No note yet.")).toBeInTheDocument();
+    expect(await db.encounters.count()).toBe(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Write a note" }));
+    fireEvent.change(screen.getByRole("textbox", { name: /Note for/ }), {
+      target: { value: "Unsaved thought" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.getByText("No note yet.")).toBeInTheDocument();
+    expect(await db.encounters.count()).toBe(0);
+  });
+
+  it("does not persist a whitespace-only note", async () => {
+    render(<Read />);
+    await screen.findByText("No note yet.");
+    fireEvent.click(screen.getByRole("button", { name: "Write a note" }));
+    fireEvent.change(screen.getByRole("textbox", { name: /Note for/ }), {
+      target: { value: "   \n" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save note" }));
+
+    await waitFor(async () => expect(await db.encounters.count()).toBe(0));
+    expect(await db.passageNotes.count()).toBe(0);
   });
 
   it("opens and displays an existing encounter note without creating another encounter", async () => {
@@ -102,7 +133,7 @@ describe("Read screen (smoke test)", () => {
     await screen.findByText("Reading Desk");
     await waitFor(async () => expect(await db.readingYears.count()).toBe(1));
     const year = (await db.readingYears.toArray())[0];
-    const firstButton = (await screen.findAllByRole("button", { name: "Mark complete" }))[0];
+    const firstButton = (await screen.findAllByRole("button", { name: /^Mark complete:/ }))[0];
     const row = firstButton.closest(".reading-row")!;
     const streamLabel = row.querySelector(".reading-row__stream")!.textContent;
     const streamByLabel = {
@@ -116,7 +147,7 @@ describe("Read screen (smoke test)", () => {
     // Finish and tear down the bootstrap render before seeding the existing
     // note. Writing while its one-time Notebook load was in flight made this
     // setup race whether that load observed the note.
-    await screen.findByRole("textbox", { name: /Note for/ });
+    await screen.findByText("No note yet.");
     firstRender.unmount();
     await act(async () => {
       const encounter = await getOrCreateEncounter(year.id, stream, 1);
@@ -131,9 +162,9 @@ describe("Read screen (smoke test)", () => {
   it("opens an existing note for editing with mouse and keyboard activation", async () => {
     const firstRender = render(<Read />);
     await screen.findByText("Reading Desk");
-    await screen.findByRole("textbox");
+    await screen.findByText("No note yet.");
     const year = (await db.readingYears.toArray())[0];
-    const firstButton = (await screen.findAllByRole("button", { name: "Mark complete" }))[0];
+    const firstButton = (await screen.findAllByRole("button", { name: /^Mark complete:/ }))[0];
     const row = firstButton.closest(".reading-row")!;
     const streamLabel = row.querySelector(".reading-row__stream")!.textContent;
     const streamByLabel = {
@@ -151,12 +182,14 @@ describe("Read screen (smoke test)", () => {
     firstRender.unmount();
 
     render(<Read />);
-    const noteControl = await screen.findByRole("button", { name: /Edit note for/ });
+    const noteControl = await screen.findByRole("button", { name: "Edit note" });
+    noteControl.focus();
     fireEvent.keyDown(noteControl, { key: "Enter" });
+    fireEvent.click(noteControl);
     expect(await screen.findByRole("textbox", { name: /Note for/ })).toHaveValue("Existing note");
 
-    fireEvent.blur(screen.getByRole("textbox", { name: /Note for/ }));
-    const reopenedControl = await screen.findByRole("button", { name: /Edit note for/ });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    const reopenedControl = await screen.findByRole("button", { name: "Edit note" });
     fireEvent.click(reopenedControl);
     expect(await screen.findByRole("textbox", { name: /Note for/ })).toHaveValue("Existing note");
   });
@@ -167,7 +200,7 @@ describe("Read screen (smoke test)", () => {
 
     // "Mark complete" appears twice per row (the swipe-hint overlay text and
     // the real button) — target the button specifically by role.
-    const completeButtons = await screen.findAllByRole("button", { name: "Mark complete" });
+    const completeButtons = await screen.findAllByRole("button", { name: /^Mark complete:/ });
     expect(completeButtons.length).toBeGreaterThan(0);
 
     fireEvent.click(completeButtons[0]);
@@ -177,6 +210,6 @@ describe("Read screen (smoke test)", () => {
       expect(encounters.some((e) => e.completedAt !== null)).toBe(true);
     });
 
-    expect(await screen.findAllByRole("button", { name: "Mark incomplete" })).not.toHaveLength(0);
+    expect(await screen.findAllByRole("button", { name: /^Mark incomplete:/ })).not.toHaveLength(0);
   });
 });
