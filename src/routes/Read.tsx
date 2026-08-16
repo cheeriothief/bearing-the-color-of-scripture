@@ -127,6 +127,7 @@ export default function Read() {
         <div className="reading-desk__notebook" data-hidden={notebookHidden}>
           {effectiveSelected ? (
             <Notebook
+              key={`${readingYear.id}-${effectiveSelected.stream}-${effectiveSelected.ordinal}`}
               readingYearId={readingYear.id}
               resolved={effectiveSelected}
               onBack={() => setSelectedStream(null)}
@@ -173,7 +174,6 @@ function ReadingRow({
 
   // --- Swipe-to-complete (left-to-right), with a non-swipe fallback button
   // for accessibility and to avoid edge-swipe conflicts, per the spec. ---
-  const contentRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ startX: number; dragging: boolean } | null>(null);
   const [dragX, setDragX] = useState(0);
 
@@ -201,6 +201,9 @@ function ReadingRow({
     <div
       className="reading-row"
       onClick={onSelect}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       style={{
         cursor: "pointer",
         outline: selected ? "1px solid var(--color-accent)" : "none",
@@ -212,12 +215,14 @@ function ReadingRow({
         )}%, transparent)`,
       }}
     >
-      <div
-        ref={contentRef}
-        className="reading-row__content"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+      <button
+        type="button"
+        className="reading-row__selection"
+        onClick={(event) => {
+          event.stopPropagation();
+          onSelect();
+        }}
+        aria-label={`Open notebook for ${reference.display}, ${STREAM_LABELS[stream]}`}
       >
         <span className="reading-row__stream">{STREAM_LABELS[stream]}</span>
         <span className="reading-row__ref" data-completed={completed}>
@@ -228,17 +233,17 @@ function ReadingRow({
             {priorCount} previous encounter{priorCount === 1 ? "" : "s"}
           </span>
         )}
-        <div className="reading-row__actions">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleComplete();
-            }}
-          >
-            {completed ? "Mark incomplete" : "Mark complete"}
-          </button>
-        </div>
+      </button>
+      <div className="reading-row__actions">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggleComplete();
+          }}
+        >
+          {completed ? "Mark incomplete" : "Mark complete"}
+        </button>
       </div>
     </div>
   );
@@ -263,22 +268,27 @@ function Notebook({
   const [editingNote, setEditingNote] = useState(false);
   const saveInFlight = useRef<Promise<void> | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoaded(false);
-    (async () => {
-      const enc = await findEncounter(readingYearId, stream, ordinal);
-      const existing = enc ? await getPassageNote(enc.id) : "";
-      if (!cancelled) {
-        setNoteDraft(existing);
-        setEditingNote(!existing.trim()); // start in edit mode only if there's nothing written yet
-        setLoaded(true);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+  const storedNote = useLiveQuery(async () => {
+    const encounter = await findEncounter(readingYearId, stream, ordinal);
+    const markdown = encounter ? await getPassageNote(encounter.id) : "";
+    return { readingYearId, stream, ordinal, markdown };
   }, [readingYearId, stream, ordinal]);
+
+  useEffect(() => {
+    setLoaded(false);
+  }, [readingYearId, stream, ordinal]);
+
+  useEffect(() => {
+    if (
+      storedNote === undefined ||
+      storedNote.readingYearId !== readingYearId ||
+      storedNote.stream !== stream ||
+      storedNote.ordinal !== ordinal
+    ) return;
+    setNoteDraft(storedNote.markdown);
+    setEditingNote(!storedNote.markdown.trim()); // start in edit mode only if there's nothing written yet
+    setLoaded(true);
+  }, [storedNote, readingYearId, stream, ordinal]);
 
   function handleSave(): Promise<void> {
     if (saveInFlight.current) return saveInFlight.current;
@@ -334,6 +344,7 @@ function Notebook({
       ) : (
         <textarea
           className="notebook-textarea"
+          aria-label={`Note for ${reference.display}`}
           value={loaded ? noteDraft : ""}
           onChange={(e) => setNoteDraft(e.target.value)}
           onBlur={handleSave}

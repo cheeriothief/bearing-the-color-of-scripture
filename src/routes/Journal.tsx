@@ -81,6 +81,7 @@ function ReflectionEditor({
         <>
           <textarea
             className="notebook-textarea"
+            aria-label={`${title} for ${subtitle}`}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Write freely — Markdown supported."

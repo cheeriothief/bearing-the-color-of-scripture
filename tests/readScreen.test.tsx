@@ -50,22 +50,45 @@ describe("Read screen (smoke test)", () => {
     expect(await countEngagedEncounters(year.id, "gospel", [1])).toBe(0);
   });
 
-  it("selecting another reading and opening its notebook remains passive", async () => {
+  it("selects another reading by pointer without toggling completion or creating activity", async () => {
     render(<Read />);
     await screen.findByText("Reading Desk");
     const completeButtons = await screen.findAllByRole("button", { name: "Mark complete" });
     expect(completeButtons.length).toBeGreaterThan(1);
 
-    fireEvent.click(completeButtons[1].closest(".reading-row")!);
+    const secondRow = completeButtons[1].closest(".reading-row")!;
+    const selection = secondRow.querySelector<HTMLButtonElement>(".reading-row__selection")!;
+    fireEvent.click(selection);
 
-    await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole("textbox", { name: /Note for/ })).toBeEnabled());
     expect(await db.encounters.count()).toBe(0);
+    expect(completeButtons[1]).toHaveAccessibleName("Mark complete");
+  });
+
+  it("selects different readings with native keyboard activation without toggling completion", async () => {
+    render(<Read />);
+    const selectionButtons = await screen.findAllByRole("button", { name: /Open notebook for/ });
+    expect(selectionButtons.length).toBeGreaterThan(1);
+
+    selectionButtons[1].focus();
+    fireEvent.keyDown(selectionButtons[1], { key: "Enter" });
+    fireEvent.click(selectionButtons[1]);
+
+    const reference = selectionButtons[1].querySelector(".reading-row__ref")!.textContent!;
+    await waitFor(() => {
+      expect(screen.getByRole("textbox", { name: `Note for ${reference}` })).toBeEnabled();
+    });
+    expect(await db.encounters.count()).toBe(0);
+    expect(screen.getAllByRole("button", { name: "Mark complete" })).toHaveLength(
+      selectionButtons.length
+    );
   });
 
   it("saving meaningful note content creates an encounter", async () => {
     render(<Read />);
     await screen.findByText("Reading Desk");
-    const textarea = await screen.findByRole("textbox");
+    const textarea = await screen.findByRole("textbox", { name: /Note for/ });
+    await waitFor(() => expect(textarea).toBeEnabled());
 
     fireEvent.change(textarea, { target: { value: "A meaningful note" } });
     fireEvent.click(screen.getByRole("button", { name: "Save note" }));
@@ -90,12 +113,15 @@ describe("Read screen (smoke test)", () => {
       "New Testament": "newTestament",
     } as const;
     const stream = streamByLabel[streamLabel as keyof typeof streamByLabel];
+    // Finish and tear down the bootstrap render before seeding the existing
+    // note. Writing while its one-time Notebook load was in flight made this
+    // setup race whether that load observed the note.
+    await screen.findByRole("textbox", { name: /Note for/ });
+    firstRender.unmount();
     await act(async () => {
       const encounter = await getOrCreateEncounter(year.id, stream, 1);
       await savePassageNote(encounter.id, "Existing **note**");
     });
-
-    firstRender.unmount();
     render(<Read />);
 
     expect(await screen.findByText("note", { selector: "strong" })).toBeInTheDocument();
@@ -127,12 +153,12 @@ describe("Read screen (smoke test)", () => {
     render(<Read />);
     const noteControl = await screen.findByRole("button", { name: /Edit note for/ });
     fireEvent.keyDown(noteControl, { key: "Enter" });
-    expect(await screen.findByRole("textbox")).toHaveValue("Existing note");
+    expect(await screen.findByRole("textbox", { name: /Note for/ })).toHaveValue("Existing note");
 
-    fireEvent.blur(screen.getByRole("textbox"));
+    fireEvent.blur(screen.getByRole("textbox", { name: /Note for/ }));
     const reopenedControl = await screen.findByRole("button", { name: /Edit note for/ });
     fireEvent.click(reopenedControl);
-    expect(await screen.findByRole("textbox")).toHaveValue("Existing note");
+    expect(await screen.findByRole("textbox", { name: /Note for/ })).toHaveValue("Existing note");
   });
 
   it("marking a reading complete updates the UI and persists to the database", async () => {
