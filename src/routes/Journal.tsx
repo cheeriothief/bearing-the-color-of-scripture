@@ -19,26 +19,21 @@ const MONTH_NAMES = [
 
 export default function Journal() {
   const today = clock.today();
+  const dailyDate = `${today.day} ${MONTH_NAMES[today.month - 1]} ${today.year}`;
 
   return (
-    <main className="journal" style={{ padding: "var(--space-4)" }}>
-      <h1 style={{ fontFamily: "var(--font-display)" }}>Journal</h1>
-
-      <ReflectionEditor
-        title="Daily Reflection"
-        subtitle={localDateToISO(today)}
-        load={() => getDailyReflection(today)}
-        save={(markdown) => saveDailyReflection(today, markdown)}
-        queryKey={`daily-${localDateToISO(today)}`}
-      />
-
-      <ReflectionEditor
-        title="Monthly Reflection"
-        subtitle={`${MONTH_NAMES[today.month - 1]} ${today.year}`}
-        load={() => getMonthlyReflection(today)}
-        save={(markdown) => saveMonthlyReflection(today, markdown)}
-        queryKey={`monthly-${today.year}-${today.month}`}
-      />
+    <main className="journal">
+      <div className="journal__inner">
+        <h1 className="journal__title">Journal</h1>
+        <div className="journal__spread">
+          <ReflectionEditor title="Daily Reflection" subtitle={dailyDate}
+            load={() => getDailyReflection(today)} save={(markdown) => saveDailyReflection(today, markdown)}
+            queryKey={`daily-${localDateToISO(today)}`} />
+          <ReflectionEditor title="Monthly Reflection" subtitle={`${MONTH_NAMES[today.month - 1]} ${today.year}`}
+            load={() => getMonthlyReflection(today)} save={(markdown) => saveMonthlyReflection(today, markdown)}
+            queryKey={`monthly-${today.year}-${today.month}`} />
+        </div>
+      </div>
     </main>
   );
 }
@@ -65,6 +60,13 @@ function ReflectionEditor({
   function beginEditing() {
     setDraft(markdown);
     setEditing(true);
+  }
+
+  function handleEmptyKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      beginEditing();
+    }
   }
 
   async function handleSave() {
@@ -97,23 +99,19 @@ function ReflectionEditor({
           </div>
         </>
       ) : (
-        <div
-          onClick={beginEditing}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              beginEditing();
-            }
-          }}
-          className="reflection-view"
-          role="button"
-          tabIndex={0}
-          aria-label={`Edit ${title}`}
-        >
+        <div className="reflection-view">
           {markdown.trim() ? (
-            <MarkdownView markdown={markdown} />
+            <>
+              <MarkdownView markdown={markdown} />
+              <div className="reflection-actions">
+                <button type="button" onClick={beginEditing} aria-label={`Edit ${title}`}>Edit</button>
+              </div>
+            </>
           ) : (
-            <p className="reflection-empty">Nothing written yet — tap to begin.</p>
+            <button type="button" className="reflection-empty" onClick={beginEditing}
+              onKeyDown={handleEmptyKeyDown} aria-label={`Edit ${title}`}>
+              <span>Nothing written yet — tap to begin.</span>
+            </button>
           )}
         </div>
       )}
