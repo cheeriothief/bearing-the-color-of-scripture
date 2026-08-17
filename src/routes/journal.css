@@ -1,57 +1,53 @@
-.reflection-section {
-  margin-top: var(--space-4);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border);
-}
-.reflection-heading {
-  font-family: var(--font-display);
-  font-size: 20px;
-}
-.reflection-sub {
-  font-family: var(--font-ui);
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-3);
-}
-.reflection-view {
-  min-height: 60px;
-  cursor: pointer;
-}
-.reflection-empty {
-  font-family: var(--font-ui);
-  font-size: 13px;
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
-.markdown-view {
-  font-family: var(--font-body);
-  font-size: 15px;
-  line-height: 1.7;
-}
-.markdown-view h1,
-.markdown-view h2,
-.markdown-view h3 {
-  font-family: var(--font-display);
-  margin: var(--space-3) 0 var(--space-1);
-}
+.journal { padding: var(--space-4); }
+.journal__title { margin: 0; font-family: var(--font-display); }
+.reflection-section { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+.reflection-heading { margin: 0; font-family: var(--font-display); font-size: 20px; }
+.reflection-sub { margin: var(--space-1) 0 var(--space-3); font-family: var(--font-ui); font-size: 12px; color: var(--color-text-muted); }
+.reflection-view { min-height: 60px; }
+.reflection-empty { display: grid; width: 100%; min-height: 60px; padding: var(--space-3); border: 0; background: transparent; color: var(--color-text-muted); font-family: var(--font-body); font-size: 13px; font-style: italic; text-align: center; place-items: center; }
+.reflection-actions { margin-top: var(--space-3); }
+.reflection-actions button, .reading-row__actions button { padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: transparent; color: inherit; font: 12px var(--font-ui); }
+.reading-row__actions { display: flex; gap: var(--space-2); }
+.markdown-view { font-family: var(--font-body); font-size: 15px; line-height: 1.7; }
+.markdown-view h1, .markdown-view h2, .markdown-view h3 { font-family: var(--font-display); margin: var(--space-3) 0 var(--space-1); }
 .markdown-view p { margin-bottom: var(--space-2); }
-.markdown-view ul,
-.markdown-view ol {
-  margin-left: var(--space-3);
-  margin-bottom: var(--space-2);
-}
-.markdown-view blockquote {
-  border-left: 2px solid var(--color-accent);
-  padding-left: var(--space-2);
-  color: var(--color-text-muted);
-  margin: var(--space-2) 0;
-}
+.markdown-view ul, .markdown-view ol { margin-left: var(--space-3); margin-bottom: var(--space-2); }
+.markdown-view blockquote { border-left: 2px solid var(--color-accent); padding-left: var(--space-2); color: var(--color-text-muted); margin: var(--space-2) 0; }
 .markdown-view a { color: var(--color-accent); }
-.markdown-view code {
-  background: var(--color-bg-inset);
-  color: var(--color-text-inset);
-  padding: 1px 4px;
-  border-radius: 3px;
-  font-size: 0.9em;
+.markdown-view code { background: var(--color-bg-inset); color: var(--color-text-inset); padding: 1px 4px; border-radius: 3px; font-size: .9em; }
+
+/* Prayer Book's journal becomes a balanced paper spread at the same tablet breakpoint as the Reading Desk. */
+@media (min-width: 768px) {
+  [data-theme="prayerbook"] .journal { min-height: calc(100vh - 60px); padding: clamp(20px, 4vh, 48px) clamp(24px, 5vw, 72px); background: var(--color-bg-inset); color: var(--color-text-inset); }
+  [data-theme="prayerbook"] .journal__inner { width: min(1200px, 100%); margin: 0 auto; }
+  [data-theme="prayerbook"] .journal__title { font-size: 2em; font-weight: 500; }
+  [data-theme="prayerbook"] .journal__spread { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); height: clamp(520px, 68vh, 760px); margin-top: var(--space-4); overflow: hidden; border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); box-shadow: 0 18px 50px rgb(0 0 0 / .28); }
+  [data-theme="prayerbook"] .reflection-section { display: flex; min-width: 0; margin: 0; padding: clamp(32px, 5vw, 64px); border: 0; flex-direction: column; overflow-y: auto; }
+  [data-theme="prayerbook"] .reflection-section + .reflection-section { border-left: 1px solid color-mix(in srgb, var(--color-accent) 38%, var(--color-border)); box-shadow: inset 8px 0 16px rgb(0 0 0 / .025); }
+  [data-theme="prayerbook"] .reflection-heading { position: relative; font-size: clamp(26px, 3vw, 34px); font-weight: 500; text-align: center; }
+  [data-theme="prayerbook"] .reflection-heading::after {
+    content: "";
+    display: block;
+    width: min(132px, 42%);
+    height: 1px;
+    margin: 13px auto 0;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-accent) 72%, transparent) 18% 82%, transparent);
+  }
+  [data-theme="prayerbook"] .reflection-heading::before {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-accent);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  [data-theme="prayerbook"] .reflection-sub { margin-top: var(--space-2); color: var(--color-accent); text-align: center; letter-spacing: .04em; }
+  [data-theme="prayerbook"] .reflection-view { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+  [data-theme="prayerbook"] .reflection-empty { min-height: 100%; flex: 1; color: color-mix(in srgb, var(--color-text-muted) 82%, var(--color-text)); font-size: 15px; cursor: text; }
+  [data-theme="prayerbook"] .reflection-empty:focus-visible { outline-offset: -2px; }
+  [data-theme="prayerbook"] .reflection-actions { margin-top: auto; padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+  @media (hover: hover) { [data-theme="prayerbook"] .reflection-empty:hover { background: color-mix(in srgb, var(--color-accent) 4%, transparent); } }
 }
