@@ -55,12 +55,14 @@
 .notebook-back { font-family: var(--font-ui); font-size: 13px; color: var(--color-text-muted); margin-bottom: var(--space-3); display: inline-block; align-self: flex-start; }
 
 @media (min-width: 768px) {
-  .reading-desk { min-height: calc(100vh - 60px); padding: clamp(20px, 4vh, 48px) clamp(24px, 5vw, 72px); }
+  .reading-desk { padding: clamp(20px, 4vh, 48px) clamp(24px, 5vw, 72px); }
+  [data-theme="prayerbook"] .reading-desk { height: 100%; min-height: 0; display: flex; flex-direction: column; }
   .reading-desk > h1, .reading-desk > p, .reading-desk__session { width: min(1200px, 100%); margin-left: auto; margin-right: auto; }
   .reading-desk > h1 { padding: 0 !important; }
   .reading-desk > p { padding: 0 !important; }
   .reading-desk__session { padding: var(--space-3) 0 var(--space-4); }
   .reading-desk__panes { flex-direction: row; width: min(1200px, 100%); height: clamp(520px, 68vh, 760px); margin: 0 auto; overflow: hidden; border-radius: var(--radius-md); box-shadow: 0 18px 50px rgb(0 0 0 / .28); }
+  [data-theme="prayerbook"] .reading-desk__panes { flex: 1 1 520px; width: min(1200px, 100%); height: auto; min-height: 0; max-height: 760px; }
   .reading-desk__list { width: 33.333%; flex: none; padding: var(--space-4) var(--space-3); overflow-y: auto; }
   .reading-desk__list[data-hidden="true"], .reading-desk__notebook[data-hidden="true"] { display: block; }
   .reading-desk__notebook { width: 66.667%; padding: clamp(32px, 5vw, 64px); overflow-y: auto; border-left: 2px solid color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); box-shadow: inset 10px 0 20px rgb(0 0 0 / .04); }
