@@ -218,17 +218,19 @@
     outline-offset: 3px;
   }
 
-  [data-theme="prayerbook"] .app-shell--home > nav {
+  /* The persistent navigation carries Home's centered treatment through
+     Prayer Book interior screens at this breakpoint. */
+  [data-theme="prayerbook"] .app-shell > nav {
     background: rgba(25, 14, 10, 0.94);
     box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.18);
   }
-  [data-theme="prayerbook"] .app-shell--home > nav ul {
+  [data-theme="prayerbook"] .app-shell > nav ul {
     justify-content: center;
     gap: clamp(24px, 6vw, 70px);
     border-color: rgba(166, 123, 57, 0.42);
   }
-  [data-theme="prayerbook"] .app-shell--home > nav a { color: #a9956a; }
-  [data-theme="prayerbook"] .app-shell--home > nav a.active {
+  [data-theme="prayerbook"] .app-shell > nav a { color: #a9956a; font-size: 16px; }
+  [data-theme="prayerbook"] .app-shell > nav a.active {
     color: #dfc681;
     text-shadow: 0 0 14px rgba(207, 162, 75, 0.28);
   }
