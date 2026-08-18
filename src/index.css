@@ -144,3 +144,36 @@ main {
   min-height: 60vh;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
+
+/* At tablet size, Prayer Book is one viewport-sized application shell. The
+   route region, rather than the document, owns any scrolling required by long
+   content; the header and primary navigation therefore remain in the shell's
+   fixed rows. Phone layouts and the other themes retain their existing
+   document-flow behavior. */
+@media (min-width: 768px) {
+  [data-theme="prayerbook"] .app-shell {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  [data-theme="prayerbook"] .app-header,
+  [data-theme="prayerbook"] .app-shell > nav {
+    flex: 0 0 auto;
+  }
+
+  [data-theme="prayerbook"] .app-route {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  [data-theme="prayerbook"] .app-route > main {
+    min-height: 100%;
+  }
+}

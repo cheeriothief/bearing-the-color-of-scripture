@@ -65,14 +65,16 @@ export default function App() {
           </NavLink>
         </header>
       )}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/read" element={<Read />} />
-        <Route path="/journal" element={<Journal />} />
-        <Route path="/library" element={<Library />} />
-        <Route path="/prayer" element={<Prayer />} />
-        <Route path="/settings" element={<Settings />} />
-      </Routes>
+      <div className="app-route">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/read" element={<Read />} />
+          <Route path="/journal" element={<Journal />} />
+          <Route path="/library" element={<Library />} />
+          <Route path="/prayer" element={<Prayer />} />
+          <Route path="/settings" element={<Settings />} />
+        </Routes>
+      </div>
       <nav aria-label="Primary">
         <ul>
           {NAV_ITEMS.map((item) => (

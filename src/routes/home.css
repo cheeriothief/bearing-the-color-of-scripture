@@ -63,8 +63,6 @@
    above intentionally retain the existing, simple Home presentation. */
 @media (min-width: 768px) {
   [data-theme="prayerbook"] .app-shell--home {
-    min-height: 100vh;
-    min-height: 100dvh;
     display: grid;
     grid-template-rows: 1fr auto;
     background:
@@ -75,6 +73,8 @@
   }
 
   [data-theme="prayerbook"] .app-shell--home .app-header { display: none; }
+
+  [data-theme="prayerbook"] .app-shell--home .app-route { min-height: 0; }
 
   [data-theme="prayerbook"] .home {
     min-height: 0;
