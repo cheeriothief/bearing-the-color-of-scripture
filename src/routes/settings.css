@@ -1,0 +1,67 @@
+.settings { padding: var(--space-4); }
+.settings__title { margin: .67em 0; font-family: var(--font-display); }
+.settings__section + .settings__section { margin-top: var(--space-4); }
+.settings__section-title {
+  margin: 0;
+  color: var(--color-text-muted);
+  font: 14px var(--font-ui);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.settings__year-label { margin: var(--space-2) 0 0; color: var(--color-text-muted); font: 13px var(--font-ui); }
+.settings__explanation { margin: 4px 0 0; color: var(--color-text-muted); font: 12px/1.5 var(--font-ui); }
+.settings__date-controls { display: flex; gap: var(--space-2); align-items: center; margin-top: var(--space-3); }
+.settings__date-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.settings__date-input,
+.settings__save-button { padding: 6px 10px; border-radius: var(--radius-sm); background: transparent; font: 14px var(--font-ui); }
+.settings__date-input { border: 1px solid var(--color-border); color: var(--color-text); }
+.settings__save-button { padding-inline: 14px; border: 1px solid var(--color-accent); color: var(--color-accent); font-size: 13px; }
+.settings__saved-message { margin: var(--space-2) 0 0; color: var(--color-accent); font: 12px var(--font-ui); }
+.settings__theme-options { display: flex; margin-top: var(--space-2); flex-direction: column; }
+.settings__theme-row { display: flex; gap: var(--space-2); align-items: flex-start; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; }
+.settings__theme-row + .settings__theme-row { margin-top: var(--space-2); }
+.settings__theme-radio { margin-top: 4px; }
+.settings__theme-name { display: block; font: 17px var(--font-display); }
+.settings__theme-description { display: block; margin-top: 2px; color: var(--color-text-muted); font: 13px var(--font-ui); }
+
+/* Only Prayer Book at the shared tablet breakpoint receives the quiet ledger
+   interior. Phone, Candlelight, and Minimal retain their existing treatment. */
+@media (min-width: 768px) {
+  [data-theme="prayerbook"] .settings {
+    min-height: 100%;
+    padding: clamp(20px, 4vh, 48px) clamp(24px, 5vw, 72px) clamp(40px, 7vh, 80px);
+    background: var(--color-bg-inset);
+    color: var(--color-text-inset);
+  }
+  [data-theme="prayerbook"] .settings__inner { width: min(1200px, 100%); margin: 0 auto; }
+  [data-theme="prayerbook"] .settings__title { margin: 0; font-size: 2em; font-weight: 500; }
+  [data-theme="prayerbook"] .settings__surface {
+    width: min(900px, 100%);
+    margin: var(--space-4) auto 0;
+    padding: clamp(38px, 6vw, 64px) clamp(36px, 8vw, 88px);
+    border: 1px solid color-mix(in srgb, var(--color-border) 78%, transparent);
+    border-radius: var(--radius-md);
+    background: var(--color-bg);
+    color: var(--color-text);
+    box-shadow: 0 18px 50px rgb(0 0 0 / .28);
+  }
+  [data-theme="prayerbook"] .settings__section + .settings__section {
+    margin-top: clamp(32px, 5vw, 48px);
+    padding-top: clamp(30px, 4vw, 42px);
+    border-top: 1px solid color-mix(in srgb, var(--color-accent) 34%, var(--color-border));
+  }
+  [data-theme="prayerbook"] .settings__section-title { color: var(--color-accent); font-size: 12px; letter-spacing: .14em; }
+  [data-theme="prayerbook"] .settings__year-label { margin-top: var(--space-3); color: var(--color-text); font: 20px var(--font-display); }
+  [data-theme="prayerbook"] .settings__explanation { width: min(68ch, 100%); margin-top: var(--space-2); font: 14px/1.6 var(--font-body); }
+  [data-theme="prayerbook"] .settings__date-controls { margin-top: var(--space-4); }
+  [data-theme="prayerbook"] .settings__date-input { min-height: 38px; border-color: color-mix(in srgb, var(--color-accent) 38%, var(--color-border)); font-family: var(--font-body); }
+  [data-theme="prayerbook"] .settings__save-button { min-height: 38px; padding-inline: 20px; font-family: var(--font-body); }
+  [data-theme="prayerbook"] .settings__theme-options { margin-top: var(--space-3); }
+  [data-theme="prayerbook"] .settings__theme-row { gap: var(--space-3); padding: 20px 0; border: 0; border-radius: 0; background: transparent; }
+  [data-theme="prayerbook"] .settings__theme-row + .settings__theme-row { margin: 0; border-top: 1px solid color-mix(in srgb, var(--color-accent) 28%, var(--color-border)); }
+  [data-theme="prayerbook"] .settings__theme-radio { width: 16px; height: 16px; margin: 4px 0 0; flex: 0 0 auto; accent-color: var(--color-accent); }
+  [data-theme="prayerbook"] .settings__theme-name { font-size: 19px; font-weight: 500; }
+  [data-theme="prayerbook"] .settings__theme-description { margin-top: 3px; font: 14px/1.45 var(--font-body); }
+  [data-theme="prayerbook"] .settings__theme-row:has(input:checked) .settings__theme-name { color: color-mix(in srgb, var(--color-text) 82%, var(--color-accent)); font-weight: 650; }
+  [data-theme="prayerbook"] .settings__theme-row:focus-within { background: color-mix(in srgb, var(--color-accent) 4%, transparent); }
+}

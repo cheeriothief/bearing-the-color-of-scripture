@@ -8,6 +8,7 @@ import {
   readingYearLabel,
 } from "../services/readingYearRepo";
 import { SystemClock, localDateToISO, type LocalDate } from "../services/clock";
+import "./settings.css";
 
 const clock = new SystemClock();
 
@@ -51,7 +52,7 @@ export default function Settings() {
     if (!year || !month || !day) return;
     const newStartDate: LocalDate = { year, month, day };
 
-    if (localDateToISO(readingYear.startDate) === dateDraft) return; // no change
+    if (localDateToISO(readingYear.startDate) === dateDraft) return;
 
     setSaving(true);
     const result = await changeStartDate(readingYear, newStartDate);
@@ -68,118 +69,66 @@ export default function Settings() {
   }
 
   return (
-    <main style={{ padding: "var(--space-4)" }}>
-      <h1 style={{ fontFamily: "var(--font-display)" }}>Settings</h1>
-
-      <section style={{ marginTop: "var(--space-4)" }}>
-        <h2 style={{ fontFamily: "var(--font-ui)", fontSize: 14, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--color-text-muted)" }}>
-          Reading Year
-        </h2>
-        {readingYear && (
-          <>
-            <p style={{ fontFamily: "var(--font-ui)", fontSize: 13, color: "var(--color-text-muted)", marginTop: "var(--space-2)" }}>
-              {readingYearLabel(readingYear)}
-            </p>
-            <p style={{ fontFamily: "var(--font-ui)", fontSize: 12, color: "var(--color-text-muted)", marginTop: 4 }}>
-              {activityExists
-                ? "You've already completed a reading, shifted a stream, or written a note in this reading year — changing the start date now will begin a new Reading Year rather than editing this one. Your existing progress and notes stay exactly where they are."
-                : "Nothing has been recorded yet for this reading year, so the start date can still be freely changed."}
-            </p>
-            <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center", marginTop: "var(--space-3)" }}>
-              <input
-                type="date"
-                value={dateDraft}
-                onChange={(e) => setDateDraft(e.target.value)}
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: 14,
-                  padding: "6px 10px",
-                  border: "1px solid var(--color-border)",
-                  borderRadius: "var(--radius-sm)",
-                  background: "transparent",
-                  color: "var(--color-text)",
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleSaveStartDate}
-                disabled={saving || dateDraft === localDateToISO(readingYear.startDate)}
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: 13,
-                  padding: "6px 14px",
-                  borderRadius: "var(--radius-sm)",
-                  border: "1px solid var(--color-accent)",
-                  color: "var(--color-accent)",
-                  background: "transparent",
-                }}
-              >
-                {saving ? "Saving…" : "Save"}
-              </button>
-            </div>
-            {savedMessage && (
-              <p style={{ fontFamily: "var(--font-ui)", fontSize: 12, color: "var(--color-accent)", marginTop: "var(--space-2)" }}>
-                {savedMessage}
-              </p>
+    <main className="settings">
+      <div className="settings__inner">
+        <h1 className="settings__title">Settings</h1>
+        <div className="settings__surface">
+          <section className="settings__section" aria-labelledby="reading-year-heading">
+            <h2 className="settings__section-title" id="reading-year-heading">Reading Year</h2>
+            {readingYear && (
+              <>
+                <p className="settings__year-label">{readingYearLabel(readingYear)}</p>
+                <p className="settings__explanation">
+                  {activityExists
+                    ? "You've already completed a reading, shifted a stream, or written a note in this reading year — changing the start date now will begin a new Reading Year rather than editing this one. Your existing progress and notes stay exactly where they are."
+                    : "Nothing has been recorded yet for this reading year, so the start date can still be freely changed."}
+                </p>
+                <div className="settings__date-controls">
+                  <label className="settings__date-label" htmlFor="reading-year-start">Reading year start date</label>
+                  <input
+                    id="reading-year-start"
+                    className="settings__date-input"
+                    type="date"
+                    value={dateDraft}
+                    onChange={(e) => setDateDraft(e.target.value)}
+                  />
+                  <button
+                    className="settings__save-button"
+                    type="button"
+                    onClick={handleSaveStartDate}
+                    disabled={saving || dateDraft === localDateToISO(readingYear.startDate)}
+                  >
+                    {saving ? "Saving…" : "Save"}
+                  </button>
+                </div>
+                {savedMessage && <p className="settings__saved-message" role="status">{savedMessage}</p>}
+              </>
             )}
-          </>
-        )}
-      </section>
+          </section>
 
-      <section style={{ marginTop: "var(--space-4)" }}>
-        <h2 style={{ fontFamily: "var(--font-ui)", fontSize: 14, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--color-text-muted)" }}>
-          Theme
-        </h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginTop: "var(--space-2)" }}>
-          {THEME_OPTIONS.map((opt) => (
-            <label
-              key={opt.value}
-              style={{
-                display: "flex",
-                gap: "var(--space-2)",
-                alignItems: "flex-start",
-                padding: "var(--space-3)",
-                border: "1px solid var(--color-border)",
-                borderRadius: "var(--radius-md)",
-                cursor: "pointer",
-                background: current === opt.value ? "var(--color-bg-inset)" : "transparent",
-              }}
-            >
-              <input
-                type="radio"
-                name="theme"
-                value={opt.value}
-                checked={current === opt.value}
-                onChange={() => setTheme(opt.value)}
-                style={{ marginTop: 4 }}
-              />
-              <span>
-                <span
-                  style={{
-                    display: "block",
-                    fontFamily: "var(--font-display)",
-                    fontSize: 17,
-                    color: current === opt.value ? "var(--color-text-inset)" : "var(--color-text)",
-                  }}
-                >
-                  {opt.label}
-                </span>
-                <span
-                  style={{
-                    display: "block",
-                    fontFamily: "var(--font-ui)",
-                    fontSize: 13,
-                    color: current === opt.value ? "var(--color-text-muted-inset)" : "var(--color-text-muted)",
-                    marginTop: 2,
-                  }}
-                >
-                  {opt.description}
-                </span>
-              </span>
-            </label>
-          ))}
+          <section className="settings__section settings__theme-section" aria-labelledby="theme-heading">
+            <h2 className="settings__section-title" id="theme-heading">Theme</h2>
+            <div className="settings__theme-options" role="radiogroup" aria-labelledby="theme-heading">
+              {THEME_OPTIONS.map((opt) => (
+                <label className="settings__theme-row" key={opt.value}>
+                  <input
+                    className="settings__theme-radio"
+                    type="radio"
+                    name="theme"
+                    value={opt.value}
+                    checked={current === opt.value}
+                    onChange={() => setTheme(opt.value)}
+                  />
+                  <span className="settings__theme-copy">
+                    <span className="settings__theme-name">{opt.label}</span>
+                    <span className="settings__theme-description">{opt.description}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
     </main>
   );
 }

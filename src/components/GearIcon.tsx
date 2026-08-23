@@ -14,13 +14,13 @@ export default function GearIcon({ size = 20 }: { size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="1.7"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <circle cx="12" cy="12" r="3.2" />
-      <path d="M12 3.5v2.4M12 18.1v2.4M20.5 12h-2.4M5.9 12H3.5M17.66 6.34l-1.7 1.7M8.04 15.96l-1.7 1.7M17.66 17.66l-1.7-1.7M8.04 8.04l-1.7-1.7" />
+      <path d="M9.7 3.2h4.6l.5 2.15c.5.2.96.47 1.38.8l2.1-.65 2.3 4-1.62 1.5a7.2 7.2 0 0 1 0 2l1.62 1.5-2.3 4-2.1-.65c-.42.33-.88.6-1.38.8l-.5 2.15H9.7l-.5-2.15a7 7 0 0 1-1.38-.8l-2.1.65-2.3-4L5.04 13a7.2 7.2 0 0 1 0-2L3.42 9.5l2.3-4 2.1.65c.42-.33.88-.6 1.38-.8L9.7 3.2Z" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   );
 }
