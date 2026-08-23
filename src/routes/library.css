@@ -93,3 +93,213 @@
   font-size: 12px;
   color: var(--color-text-muted);
 }
+
+.library__title {
+  padding: 0 var(--space-3);
+  font-family: var(--font-display);
+}
+.library-empty-copy {
+  font-family: var(--font-ui);
+  color: var(--color-text-muted);
+}
+.tag-pill[aria-pressed="true"] {
+  background: var(--color-accent);
+  color: var(--color-bg-inset);
+}
+
+/* The Prayer Book archive joins the Reading Desk and Journal interior at tablet size.
+   Phone and the Candlelight/Minimal themes intentionally retain the rules above. */
+@media (min-width: 768px) {
+  [data-theme="prayerbook"] .library {
+    height: 100%;
+    min-height: 0;
+    padding: clamp(20px, 4vh, 48px) clamp(24px, 5vw, 72px);
+    background: var(--color-bg-inset);
+    color: var(--color-text-inset);
+  }
+  [data-theme="prayerbook"] .library__inner {
+    display: flex;
+    width: min(1200px, 100%);
+    height: 100%;
+    min-height: 0;
+    margin: 0 auto;
+    flex-direction: column;
+  }
+  [data-theme="prayerbook"] .library__title {
+    margin: 0;
+    padding: 0;
+    font-size: 2em;
+    font-weight: 500;
+  }
+  [data-theme="prayerbook"] .library__archive {
+    display: flex;
+    width: min(1040px, 100%);
+    height: auto;
+    min-height: 0;
+    max-height: 720px;
+    margin: var(--space-4) auto 0;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--color-bg);
+    color: var(--color-text);
+    box-shadow: 0 18px 50px rgb(0 0 0 / .28);
+    flex: 1 1 480px;
+    flex-direction: column;
+  }
+  [data-theme="prayerbook"] .library-tabs {
+    position: relative;
+    gap: clamp(20px, 4vw, 48px);
+    padding: clamp(25px, 4vw, 38px) clamp(32px, 6vw, 72px) 0;
+    border: 0;
+    flex-wrap: nowrap;
+  }
+  [data-theme="prayerbook"] .library-tabs::after {
+    content: "";
+    position: absolute;
+    right: clamp(32px, 6vw, 72px);
+    bottom: 0;
+    left: clamp(32px, 6vw, 72px);
+    height: 1px;
+    background: var(--color-border);
+  }
+  [data-theme="prayerbook"] .library-tabs button {
+    position: relative;
+    z-index: 1;
+    padding: 0 0 14px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: color-mix(in srgb, var(--color-text-muted) 88%, var(--color-text));
+    font-family: var(--font-display);
+    font-size: clamp(15px, 1.7vw, 18px);
+    white-space: nowrap;
+  }
+  [data-theme="prayerbook"] .library-tabs button[aria-selected="true"] {
+    border: 0;
+    background: transparent;
+    color: var(--color-accent);
+  }
+  [data-theme="prayerbook"] .library-tabs button[aria-selected="true"]::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: var(--color-accent);
+  }
+  [data-theme="prayerbook"] .library-tabs button:focus-visible {
+    outline-offset: 5px;
+  }
+  [data-theme="prayerbook"] .library__panel-region {
+    min-height: 0;
+    overflow-y: auto;
+    flex: 1;
+  }
+  [data-theme="prayerbook"] .library-panel {
+    width: min(820px, 100%);
+    margin: 0 auto;
+    padding: clamp(34px, 5vw, 60px) clamp(32px, 6vw, 72px);
+  }
+  [data-theme="prayerbook"] .library-empty {
+    display: grid;
+    min-height: 340px;
+    place-items: center;
+    text-align: center;
+  }
+  [data-theme="prayerbook"] .library-empty p,
+  [data-theme="prayerbook"] .library-empty-copy {
+    max-width: 520px;
+    margin: 0 auto;
+    color: color-mix(in srgb, var(--color-text-muted) 86%, var(--color-text));
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-style: italic;
+    line-height: 1.7;
+    text-align: center;
+  }
+  [data-theme="prayerbook"] .book-group {
+    margin-bottom: clamp(30px, 5vw, 48px);
+  }
+  [data-theme="prayerbook"] .book-group__heading {
+    margin-bottom: 4px;
+    color: var(--color-accent);
+    font-size: 14px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  [data-theme="prayerbook"] .note-entry {
+    padding: 18px 0 20px;
+    border-color: var(--color-border);
+  }
+  [data-theme="prayerbook"] .note-entry__ref {
+    margin-bottom: 3px;
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-weight: 500;
+  }
+  [data-theme="prayerbook"] .note-entry__meta {
+    margin-bottom: 8px;
+    color: var(--color-text-muted);
+    font-size: 10px;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+  }
+  [data-theme="prayerbook"] .note-entry .markdown-view {
+    color: color-mix(in srgb, var(--color-text) 84%, var(--color-text-muted));
+  }
+  [data-theme="prayerbook"] .tag-pill {
+    padding: 5px 11px;
+    border-color: color-mix(in srgb, var(--color-accent) 68%, var(--color-border));
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 14px;
+  }
+  [data-theme="prayerbook"] .tag-pill[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    color: var(--color-accent);
+    box-shadow: inset 0 -2px var(--color-accent);
+  }
+  [data-theme="prayerbook"] .progress-row {
+    padding: 15px 0 8px;
+    font-family: var(--font-display);
+    font-size: 18px;
+  }
+  [data-theme="prayerbook"] .progress-row span:last-child {
+    color: var(--color-accent);
+    font-variant-numeric: tabular-nums;
+  }
+  [data-theme="prayerbook"] .progress-books {
+    margin: 0;
+    padding: 7px 0 15px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  [data-theme="prayerbook"] .export-button {
+    position: relative;
+    margin: 0;
+    padding: 18px 42px 18px 0;
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+  }
+  [data-theme="prayerbook"] .export-button::after {
+    content: "\2192";
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    color: var(--color-accent);
+    font-size: 20px;
+    transform: translateY(-50%);
+  }
+  [data-theme="prayerbook"] .export-button strong {
+    font-size: 19px;
+    font-weight: 500;
+  }
+  [data-theme="prayerbook"] .export-button span {
+    display: block;
+    max-width: 64ch;
+    line-height: 1.5;
+  }
+}
