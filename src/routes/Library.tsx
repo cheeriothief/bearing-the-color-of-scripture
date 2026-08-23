@@ -60,37 +60,42 @@ export default function Library() {
   }
 
   return (
-    <main>
-      <h1 style={{ padding: "0 var(--space-3)", fontFamily: "var(--font-display)" }}>Library</h1>
+    <main className="library">
+      <div className="library__inner">
+        <h1 className="library__title">Library</h1>
 
-      <div className="library-tabs" role="tablist" aria-label="Library sections">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            ref={(element) => { tabRefs.current[t] = element; }}
-            id={`library-tab-${t}`}
-            type="button"
-            role="tab"
-            aria-selected={tab === t}
-            aria-controls={`library-panel-${t}`}
-            tabIndex={tab === t ? 0 : -1}
-            onClick={() => setTab(t)}
-            onKeyDown={(event) => handleTabKeyDown(event, t)}
+        <div className="library__archive">
+          <div className="library-tabs" role="tablist" aria-label="Library sections">
+            {TABS.map((t) => (
+              <button
+                key={t}
+                ref={(element) => { tabRefs.current[t] = element; }}
+                id={`library-tab-${t}`}
+                type="button"
+                role="tab"
+                aria-selected={tab === t}
+                aria-controls={`library-panel-${t}`}
+                tabIndex={tab === t ? 0 : -1}
+                onClick={() => setTab(t)}
+                onKeyDown={(event) => handleTabKeyDown(event, t)}
+              >
+                {TAB_LABELS[t]}
+              </button>
+            ))}
+          </div>
+
+          <div
+            className="library__panel-region"
+            id={`library-panel-${tab}`}
+            role="tabpanel"
+            aria-labelledby={`library-tab-${tab}`}
           >
-            {TAB_LABELS[t]}
-          </button>
-        ))}
-      </div>
-
-      <div
-        id={`library-panel-${tab}`}
-        role="tabpanel"
-        aria-labelledby={`library-tab-${tab}`}
-      >
-        {tab === "notes" && <ScriptureNotesPanel />}
-        {tab === "tags" && <TagsPanel />}
-        {tab === "progress" && <ProgressPanel />}
-        {tab === "export" && <ExportPanel />}
+            {tab === "notes" && <ScriptureNotesPanel />}
+            {tab === "tags" && <TagsPanel />}
+            {tab === "progress" && <ProgressPanel />}
+            {tab === "export" && <ExportPanel />}
+          </div>
+        </div>
       </div>
     </main>
   );
@@ -102,8 +107,8 @@ function ScriptureNotesPanel() {
   if (!groups) return <p className="library-panel">Loading…</p>;
   if (groups.length === 0) {
     return (
-      <div className="library-panel">
-        <p style={{ fontFamily: "var(--font-ui)", color: "var(--color-text-muted)" }}>
+      <div className="library-panel library-empty">
+        <p>
           Nothing archived yet — passage notes appear here once you write them from the
           Reading Desk.
         </p>
@@ -118,9 +123,9 @@ function ScriptureNotesPanel() {
           <div className="book-group__heading">{book}</div>
           {entries.map((entry) => (
             <div className="note-entry" key={entry.note.id}>
+              <div className="note-entry__ref">{entry.reference.display}</div>
               <div className="note-entry__meta">
-                {entry.reference.display} · {STREAM_LABELS[entry.stream]} · ordinal{" "}
-                {entry.encounter.ordinal}
+                {STREAM_LABELS[entry.stream]} · ordinal {entry.encounter.ordinal}
               </div>
               <MarkdownView markdown={entry.note.markdown} />
             </div>
@@ -139,7 +144,7 @@ function TagsPanel() {
   return (
     <div className="library-panel">
       {tags && tags.length === 0 && (
-        <p style={{ fontFamily: "var(--font-ui)", color: "var(--color-text-muted)" }}>
+        <p className="library-empty-copy">
           No tags yet — write #tags naturally into any note or reflection and they'll show up
           here automatically.
         </p>
@@ -151,10 +156,7 @@ function TagsPanel() {
             type="button"
             className="tag-pill"
             onClick={() => setSelected(tag === selected ? null : tag)}
-            style={{
-              background: tag === selected ? "var(--color-accent)" : "none",
-              color: tag === selected ? "var(--color-bg-inset)" : "var(--color-accent)",
-            }}
+            aria-pressed={tag === selected}
           >
             #{tag}
           </button>
