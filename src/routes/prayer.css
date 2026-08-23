@@ -1,21 +1,109 @@
+.prayer { padding: var(--space-4); }
+.prayer__title {
+  margin: .67em 0;
+  font-family: var(--font-display);
+}
 .prayer-entry {
   padding: var(--space-4) 0;
   border-bottom: 1px solid var(--color-border);
 }
 .prayer-entry__title {
+  margin: 0 0 2px;
   font-family: var(--font-display);
   font-size: 19px;
-  margin-bottom: 2px;
 }
 .prayer-entry__attribution {
+  margin: 0 0 var(--space-2);
   font-family: var(--font-ui);
   font-size: 12px;
   color: var(--color-text-muted);
-  margin-bottom: var(--space-2);
 }
 .prayer-entry__text {
+  margin: 0;
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.7;
   font-style: italic;
+}
+
+/* At tablet size, Prayer Book's prayers join the shared dark interior while
+   phone and the Candlelight/Minimal themes intentionally retain the simple
+   document treatment above. */
+@media (min-width: 768px) {
+  [data-theme="prayerbook"] .prayer {
+    min-height: 100%;
+    padding: clamp(20px, 4vh, 48px) clamp(24px, 5vw, 72px) clamp(40px, 7vh, 80px);
+    background: var(--color-bg-inset);
+    color: var(--color-text-inset);
+  }
+  [data-theme="prayerbook"] .prayer__inner {
+    width: min(1200px, 100%);
+    margin: 0 auto;
+  }
+  [data-theme="prayerbook"] .prayer__title {
+    margin: 0;
+    font-size: 2em;
+    font-weight: 500;
+  }
+  [data-theme="prayerbook"] .prayer__page {
+    width: min(1040px, 100%);
+    margin: var(--space-4) auto 0;
+    padding: clamp(44px, 7vw, 78px) clamp(40px, 9vw, 112px);
+    border-radius: var(--radius-md);
+    background: var(--color-bg);
+    color: var(--color-text);
+    box-shadow: 0 18px 50px rgb(0 0 0 / .28);
+  }
+  [data-theme="prayerbook"] .prayer__measure {
+    width: min(66ch, 100%);
+    margin: 0 auto;
+  }
+  [data-theme="prayerbook"] .prayer-entry {
+    position: relative;
+    padding: 0 0 clamp(56px, 7vw, 76px);
+    border: 0;
+  }
+  [data-theme="prayerbook"] .prayer-entry + .prayer-entry {
+    padding-top: clamp(56px, 7vw, 76px);
+  }
+  [data-theme="prayerbook"] .prayer-entry:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: min(300px, 62%);
+    height: 1px;
+    background: color-mix(in srgb, var(--color-accent) 66%, transparent);
+    transform: translateX(-50%);
+  }
+  [data-theme="prayerbook"] .prayer-entry:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    bottom: -3px;
+    left: 50%;
+    width: 7px;
+    height: 7px;
+    border: 1px solid color-mix(in srgb, var(--color-accent) 82%, var(--color-border));
+    background: var(--color-bg);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  [data-theme="prayerbook"] .prayer-entry:last-child { padding-bottom: 0; }
+  [data-theme="prayerbook"] .prayer-entry__title {
+    margin-bottom: 5px;
+    font-size: clamp(23px, 2.5vw, 29px);
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  [data-theme="prayerbook"] .prayer-entry__attribution {
+    margin-bottom: clamp(18px, 2.5vw, 26px);
+    color: color-mix(in srgb, var(--color-text-muted) 90%, var(--color-text));
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  [data-theme="prayerbook"] .prayer-entry__text {
+    font-size: clamp(17px, 1.8vw, 19px);
+    line-height: 1.8;
+  }
 }
