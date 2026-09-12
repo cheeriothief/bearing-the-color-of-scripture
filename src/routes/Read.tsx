@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import type { ReadingYear, ResolvedReading, StreamKey } from "../domain/types";
-import { resolveAllStreamsForDate } from "../domain/scheduleResolver";
+import { resolveCurrentReadings } from "../services/readingProgressionRepo";
 import { findPriorOrdinalsWithSameReference } from "../domain/datasetAdapter";
 import { jsDateFromLocalDate, SystemClock, type LocalDate } from "../services/clock";
 import { getOrCreateActiveReadingYear, readingYearLabel } from "../services/readingYearRepo";
-import { listShiftEvents, shiftStream } from "../services/shiftEventRepo";
+import { listShiftEvents } from "../services/shiftEventRepo";
 import {
   defaultSessionForTime,
   getStreamSessionAssignment,
@@ -40,6 +40,7 @@ export default function Read() {
   const [readingYear, setReadingYear] = useState<ReadingYear | null>(null);
   const [session, setSession] = useState<Session>(() => defaultSessionForTime(clock.now()));
   const [selectedStream, setSelectedStream] = useState<StreamKey | null>(null);
+  const [progressionReady, setProgressionReady] = useState(false);
 
   useEffect(() => {
     getOrCreateActiveReadingYear(clock).then(setReadingYear);
@@ -57,10 +58,23 @@ export default function Read() {
   // query updates do not manufacture a new dependency object.
   const today = useMemo(() => clock.today(), []);
 
-  const resolved: ResolvedReading[] = useMemo(() => {
-    if (!readingYear || !shiftEvents) return [];
-    return resolveAllStreamsForDate(today, readingYear, shiftEvents);
+  useEffect(() => {
+    let cancelled = false;
+    setProgressionReady(false);
+    if (readingYear && shiftEvents) {
+      resolveCurrentReadings(today, readingYear, shiftEvents).then(() => {
+        if (!cancelled) setProgressionReady(true);
+      });
+    }
+    return () => { cancelled = true; };
   }, [readingYear, shiftEvents, today]);
+
+  const resolved = useLiveQuery<ResolvedReading[]>(
+    () => readingYear && shiftEvents && progressionReady
+      ? resolveCurrentReadings(today, readingYear, shiftEvents, { persist: false })
+      : Promise.resolve([]),
+    [readingYear?.id, shiftEvents, progressionReady, today]
+  ) ?? [];
 
   if (!readingYear || !assignment) {
     return (
@@ -110,7 +124,7 @@ export default function Read() {
         <div className="reading-desk__list" data-hidden={listHidden}>
           {readingsForSession.length === 0 && (
             <p style={{ fontFamily: "var(--font-ui)", fontSize: 13 }}>
-              Nothing assigned to this session today.
+              Nothing remains in this session.
             </p>
           )}
           {readingsForSession.map((r) => (
@@ -321,10 +335,6 @@ function Notebook({
     setEditingNote(true);
   }
 
-  async function handleShift() {
-    await shiftStream(readingYearId, stream, ordinal, 1);
-  }
-
   const otherSession: Session = session === "morning" ? "evening" : "morning";
   const encounter = useLiveQuery(
     () => findEncounter(readingYearId, stream, ordinal),
@@ -400,9 +410,6 @@ function Notebook({
         )}
         <button type="button" onClick={() => toggleCompletion(readingYearId, stream, ordinal)}>
           {encounter?.completedAt ? "Mark incomplete" : "Mark complete"}
-        </button>
-        <button type="button" onClick={handleShift}>
-          Shift to tomorrow
         </button>
         <button type="button" onClick={() => onReassignSession(otherSession)}>
           Move to {otherSession}

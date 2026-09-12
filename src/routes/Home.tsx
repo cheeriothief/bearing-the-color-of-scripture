@@ -4,7 +4,7 @@ import { SystemClock } from "../services/clock";
 import { getOrCreateActiveReadingYear } from "../services/readingYearRepo";
 import { listShiftEvents } from "../services/shiftEventRepo";
 import { getStreamSessionAssignment } from "../services/settingsRepo";
-import { resolveAllStreamsForDate } from "../domain/scheduleResolver";
+import { resolveCurrentReadings } from "../services/readingProgressionRepo";
 import { findEncounter } from "../services/encounterActions";
 import { remainingSessionsMessage, type SessionReadingStatus } from "../domain/homeMessage";
 import "./home.css";
@@ -27,7 +27,7 @@ export default function Home() {
       const shiftEvents = await listShiftEvents(readingYear.id);
       const assignment = await getStreamSessionAssignment();
       const today = clock.today();
-      const resolved = resolveAllStreamsForDate(today, readingYear, shiftEvents);
+      const resolved = await resolveCurrentReadings(today, readingYear, shiftEvents);
 
       const statuses: SessionReadingStatus[] = [];
       for (const r of resolved) {

@@ -225,6 +225,7 @@ describe("Read screen (smoke test)", () => {
     const completeButtons = await screen.findAllByRole("button", { name: /^Mark complete:/ });
     expect(completeButtons.length).toBeGreaterThan(0);
 
+    const completedReference = completeButtons[0].getAttribute("aria-label");
     fireEvent.click(completeButtons[0]);
 
     await waitFor(async () => {
@@ -232,6 +233,9 @@ describe("Read screen (smoke test)", () => {
       expect(encounters.some((e) => e.completedAt !== null)).toBe(true);
     });
 
-    expect(await screen.findAllByRole("button", { name: /^Mark incomplete:/ })).not.toHaveLength(0);
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: completedReference! })).not.toBeInTheDocument();
+    });
+    expect(await screen.findAllByRole("button", { name: /^Mark complete:/ })).not.toHaveLength(0);
   });
 });
