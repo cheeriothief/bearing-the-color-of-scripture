@@ -3,6 +3,7 @@ import type { ReadingYear } from "../domain/types";
 import type { Clock, LocalDate } from "./clock";
 import { localDateToISO } from "./clock";
 import { getActiveReadingYearId, setActiveReadingYearId } from "./appStateRepo";
+import { initializeFreshReadingProgression } from "./readingProgressionRepo";
 
 /**
  * Get the currently active reading year, creating the very first one
@@ -37,6 +38,7 @@ export async function getOrCreateActiveReadingYear(clock: Clock): Promise<Readin
   };
   await db.readingYears.add(readingYear);
   await setActiveReadingYearId(readingYear.id);
+  await initializeFreshReadingProgression(readingYear.id);
   return readingYear;
 }
 
@@ -91,6 +93,7 @@ export async function changeStartDate(
   if (!alreadyActive) {
     const updated: ReadingYear = { ...currentReadingYear, startDate: newStartDate };
     await db.readingYears.put(updated);
+    await initializeFreshReadingProgression(updated.id);
     return { kind: "updated", readingYear: updated };
   }
 
@@ -101,5 +104,6 @@ export async function changeStartDate(
   };
   await db.readingYears.add(created);
   await setActiveReadingYearId(created.id);
+  await initializeFreshReadingProgression(created.id);
   return { kind: "created", readingYear: created, previousReadingYear: currentReadingYear };
 }

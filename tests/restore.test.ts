@@ -12,6 +12,7 @@ import { saveDailyReflection } from "../src/services/reflectionRepo";
 import { setTheme, getTheme } from "../src/services/settingsRepo";
 import { markThresholdShown, getLastThresholdDate } from "../src/services/appStateRepo";
 import type { LocalDate } from "../src/services/clock";
+import { streamCursorKey } from "../src/services/readingProgressionRepo";
 
 const sep1: LocalDate = { year: 2026, month: 9, day: 1 };
 const timestamp = "2026-09-01T12:00:00.000Z";
@@ -180,6 +181,10 @@ describe("restoreFromJsonBackup — validated atomic replacement", () => {
     await saveDailyReflection(sep1, "Reflecting today with #gratitude.");
     await setTheme("candlelight");
     await markThresholdShown("2026-09-01");
+    await db.appState.put({
+      key: streamCursorKey("year-1", "gospel"),
+      value: { ordinal: 2, initializedAt: timestamp },
+    });
 
     const backup = await buildJsonBackup();
     expect(JSON.parse(backup).readingPlanDatasetVersion).toBe(loadDataset().datasetVersion);
@@ -197,6 +202,10 @@ describe("restoreFromJsonBackup — validated atomic replacement", () => {
     expect((await db.tagReferences.toArray()).map((tag) => tag.tag).sort()).toEqual(["gratitude", "tag"]);
     expect(await getTheme()).toBe("candlelight");
     expect(await getLastThresholdDate()).toBe("2026-09-01");
+    expect((await db.appState.get(streamCursorKey("year-1", "gospel")))?.value).toEqual({
+      ordinal: 2,
+      initializedAt: timestamp,
+    });
   });
 
   it("replaces existing state rather than merging with it", async () => {

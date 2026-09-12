@@ -1,6 +1,7 @@
 import db, { getOrCreateEncounter, type EncounterRecord } from "./database";
 import type { StreamKey } from "../domain/types";
 import { reindexTags } from "./tagRepo";
+import { nextAssignedOrdinal, streamCursorKey, type StreamCursor } from "./readingProgressionRepo";
 
 export async function findEncounter(
   readingYearId: string,
@@ -23,10 +24,22 @@ export async function toggleCompletion(
   stream: StreamKey,
   ordinal: number
 ): Promise<EncounterRecord> {
-  const encounter = await getOrCreateEncounter(readingYearId, stream, ordinal);
-  const nextCompletedAt = encounter.completedAt ? null : new Date().toISOString();
-  await db.encounters.update(encounter.id, { completedAt: nextCompletedAt });
-  return { ...encounter, completedAt: nextCompletedAt };
+  return db.transaction("rw", db.encounters, db.appState, async () => {
+    const encounter = await getOrCreateEncounter(readingYearId, stream, ordinal);
+    const nextCompletedAt = encounter.completedAt ? null : new Date().toISOString();
+    await db.encounters.update(encounter.id, { completedAt: nextCompletedAt });
+
+    const key = streamCursorKey(readingYearId, stream);
+    const cursorRow = await db.appState.get(key);
+    const cursor = cursorRow?.value as StreamCursor | undefined;
+    if (nextCompletedAt && cursor?.ordinal === ordinal) {
+      await db.appState.put({
+        key,
+        value: { ...cursor, ordinal: nextAssignedOrdinal(stream, ordinal) },
+      });
+    }
+    return { ...encounter, completedAt: nextCompletedAt };
+  });
 }
 
 export async function getPassageNote(encounterId: string): Promise<string> {

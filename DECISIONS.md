@@ -709,3 +709,26 @@ Nothing needed removing from the codebase — this was never built, only mention
 the spec. This entry exists so a future session (human or Claude Code) checking
 DECISIONS.md before picking a next feature doesn't reach for this one, and doesn't
 need to re-litigate why it's not there.
+
+## Completion-driven stream progression
+
+Current prescribed readings are persisted as five independent cursors in the existing
+`appState` table. Each cursor stores a plan ordinal (the stable identity of a stream
+occurrence), not a Scripture reference. Completing the cursor's encounter atomically
+moves only that cursor to the next assignment present in the authoritative dataset;
+the last assignment moves to a terminal `null` position and never wraps. Resolution
+also skips an already-completed cursor defensively after interruption or restore.
+
+An explicit cursor is necessary because calendar-era history cannot distinguish a
+reading intentionally skipped by the former date-driven UI from one the user intended
+to retain. On upgrade, a reading year without cursor records is therefore anchored,
+per stream, at the first assignment whose former shifted effective date has not passed.
+Earlier incomplete encounters are left historical rather than resurrected. Newly
+created reading years seed all cursors at each stream's first assignment. Existing
+encounters, notes, reflections, shifts, IDs, and timestamps are never rewritten.
+
+No IndexedDB schema or backup table was added: cursor records use `appState`, which was
+already included in JSON backup and restore. Older backups without cursor records use
+the same deterministic lazy migration. Daily reflections remain keyed to calendar date;
+reading-year dates remain cycle identity and the one-time legacy migration anchor, but
+elapsed days no longer advance initialized cursors.
